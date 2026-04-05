@@ -211,7 +211,7 @@ Kırıldığında aylık sabit taksiti hesaplar.
 
 ### Alternatif Araçlar Bul
 ```typescript
-findAlternatifler(arac: AracBilgisi, budget: number): AlterbatifArac[]
+findAlternatifler(arac: AracBilgisi, budget: number): AlternatifArac[]
 ```
 Benzer özellikli 3 alternatif araç önerir.
 
@@ -238,7 +238,7 @@ karsilastir(araclar: AracBilgisi[]): KarsilastirmaResult
   araclar: TCOResult[];           // Tüm araçlar
   enUcuzSonuc: TCOResult;         // En ucuz
   enKomforluSonuc: TCOResult;     // En konforlu
-  enDusukkKmBasiMaliyet: TCOResult; // En ekonomik
+  enDusukKmBasiMaliyet: TCOResult; // En ekonomik
   tavsiyelensinSirasi: TCOResult[]; // Tavsiye sırası
 }
 ```
@@ -262,7 +262,7 @@ AL/KIRALA/BEKLE tavsiyesi verir.
   tavsiye: 'AL' | 'KIRALA' | 'BEKLE';
   puanlar: { al: number; kirala: number; bekle: number; };
   nedenler: string[];
-  risikler: string[];
+  riskler: string[];
   firsatlar: string[];
   beklentiler: { iyiSenaryo: string; kotiSenaryo: string; };
 }
@@ -390,7 +390,7 @@ formatFaizOrani(faizOrani: number): string
 - `TCOBreakdown` - TCO dökümü
 - `KarsilastirmaResult` - Karşılaştırma sonucu
 - `KararOzeti` - Karar tavsiyesi
-- `AlterbatifArac` - Alternatif araç
+- `AlternatifArac` - Alternatif araç
 
 ### Alt Tipler
 - `MtvBilgisi`

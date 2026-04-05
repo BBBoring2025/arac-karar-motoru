@@ -25,12 +25,22 @@ export interface Vehicle {
 export interface VehicleDatabase {
   year: number;
   lastUpdated: string;
+  sourceLabel: string;
+  sourceUrl: string;
+  effectiveDate: string;
+  confidence: 'kesin' | 'yüksek' | 'yaklaşık' | 'tahmini';
+  notes: string;
   vehicles: Vehicle[];
 }
 
 export const vehicleDatabase: VehicleDatabase = {
   year: 2026,
   lastUpdated: '2026-04-05',
+  sourceLabel: 'OYDER (Otomotiv Distribütörleri ve Mobilite Derneği) ve üretici verileri',
+  sourceUrl: 'https://www.oyder.org.tr',
+  effectiveDate: '2026-04-05',
+  confidence: 'yüksek',
+  notes: 'Fiyatlar sıfır km liste fiyatlarıdır, bayii fiyatları farklılık gösterebilir. Tüketim değerleri WLTP test sonuçlarına dayanır.',
   vehicles: [
     // ==================== TOGG ====================
     {

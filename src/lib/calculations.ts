@@ -23,161 +23,19 @@ import {
   AmortismanBilgisi,
 } from "./types";
 
-import { mtvData, MTVBracket } from "@/data/mtv";
-import { inspectionData } from "@/data/muayene";
+import { calculateMTV } from "./mtv";
+import { calculateMuayeneMaliyeti } from "./muayene";
 import { calculateTotalNoterCost } from "@/data/noter";
 import { fuelData } from "@/data/yakit";
 import { amortismanData } from "@/data/amortisman";
 import { vehicleDatabase } from "@/data/araclar";
 
-// ─── MTV (Motorlu Taşıt Vergisi) ─────────────────────────────────────────────
-
-/**
- * Araç yaşını MTV yaş grubuna çevir
- */
-function getAgeGroup(aracYasi: number): string {
-  if (aracYasi <= 3) return "1-3";
-  if (aracYasi <= 6) return "4-6";
-  if (aracYasi <= 11) return "7-11";
-  if (aracYasi <= 15) return "12-15";
-  return "16+";
-}
-
-/**
- * Motor hacmine göre doğru MTV bracket'ını bul
- */
-function findMtvBracket(
-  brackets: MTVBracket[],
-  motorHacmi: number
-): MTVBracket | undefined {
-  return brackets.find(
-    (b) => motorHacmi >= b.engineSizeMin && motorHacmi <= b.engineSizeMax
-  );
-}
-
-/**
- * MTV (Motorlu Taşıt Vergisi) hesapla
- * Resmi GİB 2026 tarife tablosundan, yaklaşık formül YOK
- *
- * @param motorHacmi Motor hacmi (cc) — elektrikli araçlar için 0
- * @param aracYasi Araç yaşı (yıl, 0 = sıfır km)
- * @param yakitTupu Yakıt tipi
- * @returns Yıllık MTV tutarı (₺)
- */
-export function calculateMTV(
-  motorHacmi: number,
-  aracYasi: number,
-  yakitTupu: string
-): number {
-  const ageGroup = getAgeGroup(Math.max(1, aracYasi || 1));
-
-  // Elektrikli araçlar: MTV muaf (2026 itibariyle)
-  if (yakitTupu === "elektrik") {
-    return mtvData.electric[ageGroup] || 0;
-  }
-
-  // Hibrit araçlar: ayrı tarife (%50 indirimli benzin tarifesi)
-  if (yakitTupu === "hibrit") {
-    const bracket = findMtvBracket(mtvData.hybrid, motorHacmi);
-    if (bracket) {
-      return bracket.ageGroups[ageGroup] || 0;
-    }
-    // Hibrit tarife tablosunda bulunamazsa benzin tarifesinin yarısı
-    const gasBracket = findMtvBracket(mtvData.gasoline, motorHacmi);
-    return gasBracket ? (gasBracket.ageGroups[ageGroup] || 0) / 2 : 0;
-  }
-
-  // Yakıt tipine göre tarife tablosunu seç
-  let brackets: MTVBracket[];
-  switch (yakitTupu) {
-    case "dizel":
-      brackets = mtvData.diesel;
-      break;
-    case "lpg":
-      brackets = mtvData.lpg;
-      break;
-    default:
-      brackets = mtvData.gasoline;
-      break;
-  }
-
-  const bracket = findMtvBracket(brackets, motorHacmi);
-  if (!bracket) {
-    // Edge case: motor hacmi hiçbir bracket'a uymuyorsa son bracket
-    const lastBracket = brackets[brackets.length - 1];
-    return lastBracket?.ageGroups[ageGroup] || 0;
-  }
-
-  return bracket.ageGroups[ageGroup] || 0;
-}
-
-// ─── MUAYENE ──────────────────────────────────────────────────────────────────
-
-/**
- * Muayene maliyeti hesapla — TÜVTÜRK 2026 resmi ücretleri
- *
- * @param aracTipi Araç tipi ID'si (otomobil, kamyonet, vb.)
- * @param aracYasi Araç yaşı
- * @param yakitTupu Yakıt tipi (emisyon ölçüm ücreti için)
- * @returns Yıllık muayene maliyeti (₺)
- */
-export function calculateMuayeneMaliyeti(
-  aracTipi: string,
-  aracYasi: number,
-  yakitTupu: string
-): number {
-  // Sıfır km araçlar ilk 3 yıl muayeneden muaf
-  if (aracYasi <= 0) return 0;
-
-  // Elektrikli araçlar ayrı kategori
-  const vehicleTypeId =
-    yakitTupu === "elektrik" ? "elektrik_arac" : aracTipi || "otomobil";
-
-  const vehicleType = inspectionData.vehicleTypes.find(
-    (v) => v.id === vehicleTypeId
-  );
-  if (!vehicleType) {
-    // Fallback: otomobil
-    const defaultType = inspectionData.vehicleTypes.find(
-      (v) => v.id === "otomobil"
-    );
-    if (!defaultType) return 150;
-    return calculateInspectionCostForType(defaultType, aracYasi, yakitTupu);
-  }
-
-  return calculateInspectionCostForType(vehicleType, aracYasi, yakitTupu);
-}
-
-function calculateInspectionCostForType(
-  vehicleType: { fees: { inspectionType: string; amount: number }[] },
-  aracYasi: number,
-  yakitTupu: string
-): number {
-  // Periyodik muayene ücreti (yaşa göre)
-  const inspectionType =
-    aracYasi <= 3
-      ? "Periyodik Muayene (1-3 yaş)"
-      : "Periyodik Muayene (4+ yaş)";
-
-  const fee = vehicleType.fees.find((f) => f.inspectionType === inspectionType);
-  let total = fee?.amount || 150;
-
-  // Egzoz emisyon ölçüm ücreti (elektrikli araçlar hariç)
-  if (yakitTupu !== "elektrik") {
-    const emissionType =
-      yakitTupu === "dizel"
-        ? "Egzoz Emisyon Ölçüm (Dizel)"
-        : "Egzoz Emisyon Ölçüm (Benzin)";
-    const emissionFee = vehicleType.fees.find(
-      (f) => f.inspectionType === emissionType
-    );
-    if (emissionFee) {
-      total += emissionFee.amount;
-    }
-  }
-
-  return total;
-}
+// ─── MTV & MUAYENE (modüler import) ──────────────────────────────────────────
+// MTV ve Muayene hesaplamaları artık ayrı modüllerde:
+// - src/lib/mtv/   (calculateMTV, calculateMTVDetailed, validateMTVInput)
+// - src/lib/muayene/ (calculateMuayeneMaliyeti, calculateMuayeneDetailed)
+export { calculateMTV } from "./mtv";
+export { calculateMuayeneMaliyeti } from "./muayene";
 
 // ─── NOTER ────────────────────────────────────────────────────────────────────
 

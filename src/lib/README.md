@@ -80,7 +80,7 @@ calculateTCO(params: TCOParams): TCOResult
 
 #### Alternatif Araçlar Bul
 ```typescript
-findAlternatifler(arac: AracBilgisi, budget: number): AlterbatifArac[]
+findAlternatifler(arac: AracBilgisi, budget: number): AlternatifArac[]
 ```
 - Segment ve motor hacmı bazlı alternatifler
 - Uyumluluk puanı hesaplar (0-100)

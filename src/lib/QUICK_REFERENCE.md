@@ -38,7 +38,7 @@ const karar = generateKararOzeti(tco, aracFiyati, kiralikFiyat);
 console.log(karar.tavsiye);    // "AL" | "KIRALA" | "BEKLE"
 console.log(karar.puanlar);    // { al: 65, kirala: 20, bekle: 15 }
 console.log(karar.nedenler);   // string[]
-console.log(karar.risikler);   // string[]
+console.log(karar.riskler);   // string[]
 console.log(karar.firsatlar);  // string[]
 ```
 
@@ -50,7 +50,7 @@ const araclar = [arac1, arac2, arac3]; // En fazla 3 araç
 const karsilastirma = karsilastir(araclar);
 
 console.log(karsilastirma.enUcuzSonuc);           // TCOResult
-console.log(karsilastirma.enDusukkKmBasiMaliyet); // TCOResult
+console.log(karsilastirma.enDusukKmBasiMaliyet); // TCOResult
 console.log(karsilastirma.tavsiyelensinSirasi);   // TCOResult[]
 ```
 
