@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   // Strict mode for catching bugs early
   reactStrictMode: true,
 
+  // iyzipay Node.js modülü — Turbopack bundle etmemeli (fs + dynamic require kullanır)
+  serverExternalPackages: ['iyzipay'],
+
   // Security headers
   headers: async () => [
     {

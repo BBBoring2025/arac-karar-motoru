@@ -1,11 +1,8 @@
 /**
- * Event Tracker
+ * Event Tracker — Privacy-First Analytics
  *
- * Basit, privacy-first analytics katmanı.
- * Şu an development modunda console.log kullanır.
- * GA4, Plausible veya PostHog entegre edildiğinde
- * sadece sendToProvider() fonksiyonu değişir.
- *
+ * Provider abstraction: GA4, Plausible veya custom backend.
+ * Provider yoksa crash etmez — event sessizce atlanır.
  * Kişisel veri TOPLAMAZ — sadece anonim kullanım metrikleri.
  */
 
@@ -14,64 +11,93 @@ import type { AnalyticsEvent } from './types';
 const IS_BROWSER = typeof window !== 'undefined';
 const IS_DEV = process.env.NODE_ENV === 'development';
 
+// Global gtag/plausible type declarations
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void;
+    plausible?: (event: string, options?: { props?: Record<string, string | number> }) => void;
+  }
+}
+
 /**
  * Analytics etkin mi?
- * Production'da analytics provider varsa true döner.
- * Development'ta her zaman true (console'a yazar).
+ * Browser'da çalışıyorsa ve (dev modundaysa VEYA provider yüklüyse) true.
  */
 function isEnabled(): boolean {
   if (!IS_BROWSER) return false;
   if (IS_DEV) return true;
-  // Production'da GA veya Plausible script'i yüklü mü kontrol et
-  // TODO: Provider entegrasyonunda güncelle
+  // Production'da: GA4 veya Plausible yüklüyse true
+  if (window.gtag) return true;
+  if (window.plausible) return true;
   return false;
 }
 
 /**
  * Event'i provider'a gönder
- * TODO: GA4, Plausible veya PostHog entegrasyonu
+ * try/catch ile sarılmış — hiçbir analytics hatası uygulamayı kırmaz
  */
 function sendToProvider(event: AnalyticsEvent): void {
-  // GA4 entegrasyonu:
-  // if (window.gtag) {
-  //   window.gtag('event', event.action, {
-  //     event_category: event.category,
-  //     event_label: event.label,
-  //     value: event.value,
-  //     ...event.metadata,
-  //   });
-  // }
+  try {
+    // GA4
+    if (IS_BROWSER && window.gtag) {
+      window.gtag('event', event.action, {
+        event_category: event.category,
+        event_label: event.label,
+        value: event.value,
+        ...event.metadata,
+      });
+      return;
+    }
 
-  // Plausible entegrasyonu:
-  // if (window.plausible) {
-  //   window.plausible(event.action, {
-  //     props: { category: event.category, label: event.label, ...event.metadata },
-  //   });
-  // }
+    // Plausible
+    if (IS_BROWSER && window.plausible) {
+      const props: Record<string, string | number> = {
+        category: event.category,
+      };
+      if (event.label) props.label = event.label;
+      if (event.value !== undefined) props.value = event.value;
+      if (event.metadata) {
+        for (const [k, v] of Object.entries(event.metadata)) {
+          if (typeof v === 'string' || typeof v === 'number') {
+            props[k] = v;
+          }
+        }
+      }
+      window.plausible(event.action, { props });
+      return;
+    }
 
-  // Development: console.log
-  if (IS_DEV) {
-    console.log(
-      `[Analytics] ${event.category}/${event.action}`,
-      event.label || '',
-      event.metadata || ''
-    );
+    // Development: console.log
+    if (IS_DEV) {
+      console.log(
+        `[Analytics] ${event.category}/${event.action}`,
+        event.label || '',
+        event.metadata || ''
+      );
+    }
+  } catch {
+    // Analytics hatası uygulamayı ASLA kırmamalı
+    if (IS_DEV) {
+      console.warn('[Analytics] Event gönderilemedi:', event.action);
+    }
   }
 }
 
 /**
- * Genel event izle
+ * Genel event izle — try/catch safety wrapper
  */
 export function trackEvent(event: AnalyticsEvent): void {
-  if (!isEnabled()) return;
-  sendToProvider(event);
+  try {
+    if (!isEnabled()) return;
+    sendToProvider(event);
+  } catch {
+    // Sessizce atla
+  }
 }
 
 // ─── Önceden tanımlı event helper'ları ──────────────────────────────────────
 
-/**
- * Araç açıldı (ücretsiz hesaplama aracı)
- */
+/** Ücretsiz araç açıldı */
 export function trackToolOpened(
   toolName: 'mtv' | 'yakit' | 'otoyol' | 'muayene' | 'rota'
 ): void {
@@ -82,9 +108,7 @@ export function trackToolOpened(
   });
 }
 
-/**
- * Hesaplama yapıldı
- */
+/** Hesaplama yapıldı */
 export function trackCalculation(
   toolName: string,
   meta?: Record<string, string | number | boolean>
@@ -97,9 +121,7 @@ export function trackCalculation(
   });
 }
 
-/**
- * Rota hesaplandı
- */
+/** Rota hesaplandı */
 export function trackRouteCalculated(
   startIl: string,
   endIl: string,
@@ -114,9 +136,7 @@ export function trackRouteCalculated(
   });
 }
 
-/**
- * Premium CTA tıklandı
- */
+/** Premium CTA tıklandı */
 export function trackPremiumCTA(location: string): void {
   trackEvent({
     category: 'premium',
@@ -125,9 +145,37 @@ export function trackPremiumCTA(location: string): void {
   });
 }
 
-/**
- * Hesaplama hatası
- */
+/** Checkout başladı */
+export function trackCheckoutStarted(productId: string, price: number): void {
+  trackEvent({
+    category: 'premium',
+    action: 'checkout_started',
+    label: productId,
+    value: price,
+  });
+}
+
+/** Ödeme başarılı */
+export function trackPaymentSuccess(productId: string, price: number): void {
+  trackEvent({
+    category: 'premium',
+    action: 'payment_success',
+    label: productId,
+    value: price,
+  });
+}
+
+/** Ödeme başarısız */
+export function trackPaymentFailed(productId: string, errorMessage: string): void {
+  trackEvent({
+    category: 'premium',
+    action: 'payment_failed',
+    label: productId,
+    metadata: { error: errorMessage },
+  });
+}
+
+/** Hesaplama hatası */
 export function trackError(
   toolName: string,
   errorMessage: string

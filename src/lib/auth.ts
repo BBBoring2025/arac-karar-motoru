@@ -7,6 +7,7 @@ import { supabase } from "./supabase";
 export async function requireAdmin(): Promise<{
   authorized: boolean;
   userId?: string;
+  email?: string;
   error?: string;
 }> {
   const {
@@ -28,5 +29,5 @@ export async function requireAdmin(): Promise<{
     return { authorized: false, error: "Admin yetkisi gerekli" };
   }
 
-  return { authorized: true, userId: kullanici.id };
+  return { authorized: true, userId: kullanici.id, email: user.email };
 }

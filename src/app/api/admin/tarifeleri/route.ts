@@ -18,7 +18,12 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const tablo = searchParams.get("tablo");
 
-  if (!tablo || !["mtv_tarifeleri", "muayene_ucretleri", "otoyol_ucretleri"].includes(tablo)) {
+  const allowedTables = [
+    "mtv_tarifeleri", "muayene_ucretleri", "otoyol_ucretleri",
+    "yakit_fiyatlari", "araclar", "amortisman_oranlari", "bakim_benchmark",
+  ];
+
+  if (!tablo || !allowedTables.includes(tablo)) {
     return Response.json({ error: "Geçersiz tablo adı" }, { status: 400 });
   }
 
@@ -47,7 +52,12 @@ export async function PUT(request: NextRequest) {
     return Response.json({ error: "tablo, id ve updates gerekli" }, { status: 400 });
   }
 
-  if (!["mtv_tarifeleri", "muayene_ucretleri", "otoyol_ucretleri"].includes(tablo)) {
+  const allowedTables = [
+    "mtv_tarifeleri", "muayene_ucretleri", "otoyol_ucretleri",
+    "yakit_fiyatlari", "araclar", "amortisman_oranlari", "bakim_benchmark",
+  ];
+
+  if (!allowedTables.includes(tablo)) {
     return Response.json({ error: "Geçersiz tablo adı" }, { status: 400 });
   }
 
@@ -55,7 +65,11 @@ export async function PUT(request: NextRequest) {
 
   const { data, error } = await adminClient
     .from(tablo)
-    .update({ ...updates, guncelleme_tarihi: new Date().toISOString() })
+    .update({
+      ...updates,
+      guncelleme_tarihi: new Date().toISOString(),
+      updated_by: auth.email || 'admin',
+    })
     .eq("id", id)
     .select()
     .single();
