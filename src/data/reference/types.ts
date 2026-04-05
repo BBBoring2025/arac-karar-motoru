@@ -3,7 +3,8 @@
  * Tum veri dosyalari bu tipleri kullanir.
  */
 
-export type DataConfidence = 'kesin' | 'yuksek' | 'yaklasik' | 'tahmini';
+import { DataConfidence } from '@/lib/types';
+export type { DataConfidence };
 export type DataSource = 'official_fixed' | 'official_periodic' | 'benchmark' | 'user_input' | 'derived_model';
 
 export interface ReferenceMeta {

@@ -55,7 +55,7 @@ try {
   assert(hasOsmangazi, 'Osmangazi Köprüsü geçişi dahil');
 
   assert(
-    result.confidence === 'kesin' || result.confidence === 'yuksek' || result.confidence === 'tahmini',
+    result.confidence === 'kesin' || result.confidence === 'yüksek' || result.confidence === 'tahmini',
     `Güven seviyesi geçerli: ${result.confidence}`
   );
 } catch (e) {

@@ -87,7 +87,7 @@ export default function OtoyolHesaplama() {
               <Zap className="w-5 h-5 text-orange-500" />
               <h2 className="text-lg font-bold text-slate-900">Geçiş Ücreti</h2>
             </div>
-            <ConfidenceBadge level="kesin" />
+            <ConfidenceBadge level="yaklaşık" />
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-white bg-opacity-50 p-4 rounded-lg">
@@ -158,8 +158,8 @@ export default function OtoyolHesaplama() {
 
         {/* Güncellik İbaresi */}
         <div className="text-center text-xs text-gray-500 py-3 border-t border-gray-200">
-          <p>Kaynak: KGM 2026 Tarifeleri | Son güncelleme: 5 Nisan 2026</p>
-          <p className="mt-1">Veriler 5 Nisan 2026 itibarıyla günceldir.</p>
+          <p>Kaynak: {tollData.sourceLabel} | Tarife tarihi: {tollData.effectiveDate}</p>
+          <p className="mt-1">Veriler {tollData.lastUpdated} itibarıyla günceldir.</p>
         </div>
 
         <Card variant="highlighted" className="cursor-pointer hover:shadow-lg">

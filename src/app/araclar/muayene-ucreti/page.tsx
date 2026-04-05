@@ -158,8 +158,8 @@ export default function MuayeneUcreti() {
 
         {/* Güncellik İbaresi */}
         <div className="text-center text-xs text-gray-500 py-3 border-t border-gray-200">
-          <p>Kaynak: TÜVTÜRK 2026 Tarifesi | Son güncelleme: 5 Nisan 2026</p>
-          <p className="mt-1">Veriler 5 Nisan 2026 itibarıyla günceldir.</p>
+          <p>Kaynak: {inspectionData.sourceLabel} | Tarife tarihi: {inspectionData.effectiveDate}</p>
+          <p className="mt-1">Veriler {inspectionData.lastUpdated} itibarıyla günceldir.</p>
         </div>
 
         <Card variant="highlighted" className="cursor-pointer hover:shadow-lg">

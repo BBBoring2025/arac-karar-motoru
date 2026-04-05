@@ -163,8 +163,8 @@ export default function MTVHesaplama() {
 
         {/* Güncellik İbaresi */}
         <div className="text-center text-xs text-gray-500 py-3 border-t border-gray-200">
-          <p>Kaynak: GİB 2026 MTV Tebliği | Son güncelleme: 5 Nisan 2026</p>
-          <p className="mt-1">Veriler 5 Nisan 2026 itibarıyla günceldir.</p>
+          <p>Kaynak: {mtvData.sourceLabel} | Tarife tarihi: {mtvData.effectiveDate}</p>
+          <p className="mt-1">Veriler {mtvData.lastUpdated} itibarıyla günceldir.</p>
         </div>
 
         <Card variant="highlighted" className="cursor-pointer hover:shadow-lg">

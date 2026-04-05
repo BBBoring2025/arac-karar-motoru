@@ -71,6 +71,18 @@ console.log('\nGolden Test 5: Detaylı MTV sonucu (metadata kontrolü)');
   assert(detail.yasGrubu === '1-3', `Yaş grubu: ${detail.yasGrubu}`);
   assert(detail.tabloAdi.length > 0, `Tablo adı: ${detail.tabloAdi}`);
   assert(detail.kaynak.includes('GİB'), `Kaynak: ${detail.kaynak}`);
+  assert(typeof detail.sourceUrl === 'string' && detail.sourceUrl.length > 0, `sourceUrl dolu: ${detail.sourceUrl}`);
+  assert(typeof detail.effectiveDate === 'string' && detail.effectiveDate.length > 0, `effectiveDate dolu: ${detail.effectiveDate}`);
+}
+
+// ─── GOLDEN TEST: Elektrikli araç metadata ──────────────────────────────────
+console.log('\nGolden Test 5b: Elektrikli araç metadata');
+{
+  const detail = calculateMTVDetailed({ motorHacmi: 0, aracYasi: 3, yakitTupu: 'elektrik' });
+  assertEqual(detail.yillikTutar, 0, 'Elektrikli yıllık tutar = 0');
+  assert(detail.confidence === 'kesin', `Elektrikli confidence: ${detail.confidence}`);
+  assert(typeof detail.sourceUrl === 'string', 'Elektrikli sourceUrl mevcut');
+  assert(typeof detail.effectiveDate === 'string', 'Elektrikli effectiveDate mevcut');
 }
 
 // ─── GOLDEN TEST: Validasyon ─────────────────────────────────────────────────

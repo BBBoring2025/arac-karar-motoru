@@ -56,6 +56,8 @@ export function calculateMuayeneDetailed(input: MuayeneInput): MuayeneResult {
       muafNedeni: "Sifir km araclar ilk 3 yil muayeneden muaf",
       confidence: "kesin",
       kaynak,
+      sourceUrl: inspectionData.sourceUrl || 'https://www.tuvturk.com.tr',
+      effectiveDate: inspectionData.effectiveDate || '2026-01-01',
     };
   }
 
@@ -116,6 +118,8 @@ export function calculateMuayeneDetailed(input: MuayeneInput): MuayeneResult {
     muafNedeni,
     confidence: "kesin",
     kaynak,
+    sourceUrl: inspectionData.sourceUrl || 'https://www.tuvturk.com.tr',
+    effectiveDate: inspectionData.effectiveDate || '2026-01-01',
   };
 }
 

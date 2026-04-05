@@ -16,4 +16,6 @@ export interface MTVResult {
   motorHacmiBandi: string; // "1-1300cc", etc.
   confidence: "kesin"; // MTV her zaman kesin (resmi tarife)
   kaynak: string;
+  sourceUrl: string;
+  effectiveDate: string;
 }

@@ -1,14 +1,15 @@
 import React from "react";
 import { LucideIcon } from "lucide-react";
 import PriceTag from "./PriceTag";
-import ConfidenceBadge, { ConfidenceLevel } from "./ConfidenceBadge";
+import ConfidenceBadge from "./ConfidenceBadge";
+import { DataConfidence } from "@/lib/types";
 
 export interface ResultCardProps {
   icon: LucideIcon;
   label: string;
   value: number;
   period?: "yearly" | "monthly" | "none";
-  confidence?: ConfidenceLevel;
+  confidence?: DataConfidence;
   description?: string;
   className?: string;
 }

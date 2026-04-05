@@ -14,7 +14,8 @@ export { default as PriceTag } from "./PriceTag";
 export type { PriceTagProps } from "./PriceTag";
 
 export { default as ConfidenceBadge } from "./ConfidenceBadge";
-export type { ConfidenceBadgeProps, ConfidenceLevel } from "./ConfidenceBadge";
+export type { ConfidenceBadgeProps } from "./ConfidenceBadge";
+export type { DataConfidence } from "@/lib/types";
 
 export { default as ResultCard } from "./ResultCard";
 export type { ResultCardProps } from "./ResultCard";

@@ -48,6 +48,8 @@ export function calculateMTVDetailed(input: MTVInput): MTVResult {
       motorHacmiBandi: "N/A (Elektrikli)",
       confidence: "kesin",
       kaynak: mtvData.sourceLabel,
+      sourceUrl: mtvData.sourceUrl || 'https://www.gib.gov.tr',
+      effectiveDate: mtvData.effectiveDate || '2026-01-01',
     };
   }
 
@@ -64,6 +66,8 @@ export function calculateMTVDetailed(input: MTVInput): MTVResult {
         motorHacmiBandi: bracket.displayName,
         confidence: "kesin",
         kaynak: mtvData.sourceLabel,
+        sourceUrl: mtvData.sourceUrl || 'https://www.gib.gov.tr',
+        effectiveDate: mtvData.effectiveDate || '2026-01-01',
       };
     }
     // Hibrit tarife tablosunda bulunamazsa benzin tarifesinin yarisi
@@ -79,6 +83,8 @@ export function calculateMTVDetailed(input: MTVInput): MTVResult {
       motorHacmiBandi: gasBracket?.displayName || "Bilinmiyor",
       confidence: "kesin",
       kaynak: mtvData.sourceLabel,
+      sourceUrl: mtvData.sourceUrl || 'https://www.gib.gov.tr',
+      effectiveDate: mtvData.effectiveDate || '2026-01-01',
     };
   }
 
@@ -113,6 +119,8 @@ export function calculateMTVDetailed(input: MTVInput): MTVResult {
       motorHacmiBandi: lastBracket?.displayName || "Bilinmiyor",
       confidence: "kesin",
       kaynak: mtvData.sourceLabel,
+      sourceUrl: mtvData.sourceUrl || 'https://www.gib.gov.tr',
+      effectiveDate: mtvData.effectiveDate || '2026-01-01',
     };
   }
 
@@ -125,6 +133,8 @@ export function calculateMTVDetailed(input: MTVInput): MTVResult {
     motorHacmiBandi: bracket.displayName,
     confidence: "kesin",
     kaynak: mtvData.sourceLabel,
+    sourceUrl: mtvData.sourceUrl || 'https://www.gib.gov.tr',
+    effectiveDate: mtvData.effectiveDate || '2026-01-01',
   };
 }
 

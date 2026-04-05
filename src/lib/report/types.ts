@@ -5,6 +5,8 @@
  * Her maliyet kalemi güven bilgisi ve kaynak ile etiketlenir.
  */
 
+import { DataConfidence } from '@/lib/types';
+
 export type VeriKaynagi = 'resmi' | 'benchmark' | 'kullanici_girdisi' | 'model_tahmini';
 
 export interface RaporKalemi {
@@ -12,7 +14,7 @@ export interface RaporKalemi {
   tutar: number;        // TL
   periyot: string;      // "aylık", "yıllık", "toplam"
   veriKaynagi: VeriKaynagi;
-  guvenSeviyesi: 'kesin' | 'yüksek' | 'yaklaşık' | 'tahmini';
+  guvenSeviyesi: DataConfidence;
   kaynakAdi: string;    // "GİB 2026 Tarifesi", "OYDER Benchmark" vb.
   kullaniciGirdisiMi: boolean; // Kullanıcı tarafından override edilmiş mi
   notlar?: string;

@@ -11,7 +11,7 @@ import {
 interface DataSource {
   component: string;
   source: string;
-  reliability: 'Kesin' | 'Tahmini' | 'Ortalama';
+  reliability: 'Kesin' | 'Tahmini' | 'Yaklaşık';
   lastUpdate: string;
   url?: string;
 }
@@ -55,7 +55,7 @@ export default function MetodolojPage() {
     {
       component: 'Yakıt Fiyatları',
       source: 'PETDER / Güncel Pazar Verileri',
-      reliability: 'Ortalama',
+      reliability: 'Yaklaşık',
       lastUpdate: 'Periyodik Güncelleme',
       url: 'https://www.petder.org.tr',
     },
@@ -156,7 +156,7 @@ export default function MetodolojPage() {
                           {source.reliability}
                         </span>
                       )}
-                      {source.reliability === 'Ortalama' && (
+                      {source.reliability === 'Yaklaşık' && (
                         <span className="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-xs font-semibold flex items-center justify-center gap-1 mx-auto w-fit">
                           <TrendingUp className="w-3 h-3" />
                           {source.reliability}

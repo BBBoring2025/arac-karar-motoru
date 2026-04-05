@@ -4,18 +4,18 @@
  */
 
 /**
- * Güven Seviyesi: hesaplamanın ne kadar kesin olduğunu belirtir
+ * Veri güven seviyesi (canonical)
  * "kesin" = resmi tarife verisi (GİB, TÜVTÜRK, KGM, noter)
  * "yüksek" = doğrulanmış ancak değişkenlik gösterebilir
  * "yaklaşık" = referans değerlerden türetilmiş
  * "tahmini" = sektör benchmark'ları, ortalamalar
  */
-export type GuvenSeviyesi = "kesin" | "tahmini";
+export type DataConfidence = 'kesin' | 'yüksek' | 'yaklaşık' | 'tahmini';
 
 /**
- * Veri güven seviyesi — daha ayrıntılı (yeni modüller için)
+ * Güven Seviyesi — DataConfidence alias (geriye uyumluluk)
  */
-export type DataConfidence = 'kesin' | 'yüksek' | 'yaklaşık' | 'tahmini';
+export type GuvenSeviyesi = DataConfidence;
 
 /**
  * Referans veri metadata — her veri kaleminin kaynağı, tarihi ve güvenilirliği
@@ -30,7 +30,7 @@ export interface ReferenceMeta {
 }
 
 export interface GuvenBilgisi {
-  seviye: GuvenSeviyesi;
+  seviye: DataConfidence;
   kaynak: string;
 }
 

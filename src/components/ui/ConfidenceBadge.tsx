@@ -1,10 +1,9 @@
 import React from "react";
 import { Check, AlertCircle, Shield } from "lucide-react";
-
-export type ConfidenceLevel = "kesin" | "yuksek" | "yaklaşık" | "tahmini";
+import { DataConfidence } from "@/lib/types";
 
 export interface ConfidenceBadgeProps {
-  level: ConfidenceLevel;
+  level: DataConfidence;
   className?: string;
 }
 
@@ -21,7 +20,7 @@ const ConfidenceBadge: React.FC<ConfidenceBadgeProps> = ({
       badgeBg: "bg-green-50",
       border: "border-green-200",
     },
-    yuksek: {
+    yüksek: {
       icon: Shield,
       label: "Yüksek Güven",
       bgColor: "bg-blue-100",

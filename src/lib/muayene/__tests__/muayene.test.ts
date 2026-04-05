@@ -73,6 +73,8 @@ console.log('\nMuayene Test 6: Metadata kontrolü');
   const result = calculateMuayeneDetailed({ aracTipi: 'otomobil', aracYasi: 5, yakitTupu: 'benzin' });
   assert(result.confidence === 'kesin', `Güven: ${result.confidence}`);
   assert(result.kaynak.includes('TÜVTÜRK'), `Kaynak: ${result.kaynak}`);
+  assert(typeof result.sourceUrl === 'string' && result.sourceUrl.length > 0, `sourceUrl dolu: ${result.sourceUrl}`);
+  assert(typeof result.effectiveDate === 'string' && result.effectiveDate.length > 0, `effectiveDate dolu: ${result.effectiveDate}`);
 }
 
 // ─── SONUÇ ──────────────────────────────────────────────────────────────────

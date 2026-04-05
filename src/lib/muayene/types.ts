@@ -16,4 +16,6 @@ export interface MuayeneResult {
   muafNedeni?: string;
   confidence: "kesin";
   kaynak: string;
+  sourceUrl: string;
+  effectiveDate: string;
 }

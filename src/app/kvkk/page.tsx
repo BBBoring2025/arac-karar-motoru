@@ -18,7 +18,7 @@ export default function KVKKPage() {
         <p className="text-sm text-gray-500 mb-8">
           6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında
           <br />
-          Son güncelleme: 5 Nisan 2026
+          Son güncelleme: Nisan 2026
         </p>
 
         <div className="prose prose-gray max-w-none space-y-8">

@@ -175,7 +175,7 @@ function determineConfidence(edges: RouteEdge[]): ConfidenceLevel {
 
   if (allExact) return 'kesin';
   if (hasEstimate) return 'tahmini';
-  return 'yuksek';
+  return 'yüksek';
 }
 
 function round2(n: number): number {

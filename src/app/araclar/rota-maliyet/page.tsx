@@ -137,7 +137,7 @@ export default function RotaMaliyetPage() {
 
         {/* Alt bilgilendirme */}
         <div className="mt-8 text-center text-xs text-gray-500 py-4 border-t border-gray-200">
-          <p>Kaynak: PETDER &amp; KGM 2026 | Veriler 5 Nisan 2026 itibarıyla günceldir.</p>
+          <p>Kaynak: PETDER &amp; KGM 2026 | Veriler periyodik olarak güncellenmektedir.</p>
         </div>
 
         {/* CTA */}

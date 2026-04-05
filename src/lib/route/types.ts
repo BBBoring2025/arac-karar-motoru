@@ -3,7 +3,8 @@
  * Tüm rota hesaplama bileşenleri bu tipleri kullanır.
  */
 
-export type ConfidenceLevel = 'kesin' | 'yuksek' | 'tahmini';
+import { DataConfidence } from '@/lib/types';
+export type ConfidenceLevel = DataConfidence; // backward compatibility alias
 
 export interface City {
   plaka: number;
