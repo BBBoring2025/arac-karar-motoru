@@ -60,9 +60,10 @@ export default function GizlilikPage() {
               4. Veri Güvenliği
             </h2>
             <p className="text-gray-600 text-sm leading-relaxed">
-              Tüm veriler SSL/TLS şifrelemesi ile korunur. Ödeme işlemleri
-              iyzico güvencesiyle gerçekleştirilir. Supabase altyapısı ile
-              Row Level Security (RLS) uygulanmaktadır.
+              Tüm veriler SSL/TLS şifrelemesi ile korunur. Ödeme altyapısı
+              hazırlanmakta olup entegre edildiğinde güvenli ödeme hizmeti
+              sağlanacaktır. Supabase altyapısı ile Row Level Security (RLS)
+              uygulanmaktadır.
             </p>
           </section>
 

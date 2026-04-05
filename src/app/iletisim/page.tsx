@@ -1,6 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "İletişim",
@@ -28,17 +28,6 @@ export default function IletisimPage() {
               className="text-blue-600 hover:underline text-sm"
             >
               info@arackararmotoru.com
-            </a>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 text-center">
-            <Phone className="w-8 h-8 text-orange-500 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-1">Telefon</h3>
-            <a
-              href="tel:+901234567890"
-              className="text-blue-600 hover:underline text-sm"
-            >
-              +90 (212) 123 45 67
             </a>
           </div>
 

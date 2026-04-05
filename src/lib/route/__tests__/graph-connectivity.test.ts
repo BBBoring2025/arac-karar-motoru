@@ -17,7 +17,7 @@ console.log(`\nGraf Bağlantı Denetimi — ${ilIds.length} il merkezi\n`);
 
 let totalPairs = 0;
 let successPairs = 0;
-let failedPairs: string[] = [];
+const failedPairs: string[] = [];
 
 // Her il çiftini test et (optimize: sadece i < j)
 for (let i = 0; i < ilIds.length; i++) {

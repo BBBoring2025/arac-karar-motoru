@@ -6,7 +6,6 @@ import {
   Shield,
   Wrench,
   TrendingDown,
-  Lock,
   ArrowRight,
 } from 'lucide-react';
 import { calculateTCO } from '@/lib/calculations';
@@ -692,46 +691,11 @@ export default function RaporPage() {
               </div>
             </div>
 
-            {/* Premium Sections (Blurred) */}
-            <div className="bg-[#1B2A4A]/50 border border-orange-500/20 rounded-lg p-8 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/30 to-transparent pointer-events-none" />
-
-              <div className="blur-sm opacity-50">
-                <h3 className="text-2xl font-bold text-white mb-6">
-                  3 Alternatif Araç Önerisi
-                </h3>
-                <div className="space-y-4">
-                  {['Toyota Hilux', 'Honda CR-V', 'Renault Duster'].map((name, idx) => (
-                    <div key={idx} className="bg-gray-800 rounded p-4">
-                      <p className="text-white font-medium">{name}</p>
-                      <p className="text-gray-400 text-sm">Uyum skoru: 92%</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="bg-black/60 px-6 py-3 rounded-lg flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-orange-500" />
-                  <span className="text-white font-semibold">Premium İçerik</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Premium CTA */}
-            <div className="bg-gradient-to-r from-orange-500/30 to-orange-500/10 border border-orange-500/50 rounded-lg p-8 text-center">
-              <h3 className="text-2xl font-bold text-white mb-4">
-                Tam Raporu Açmak İstiyorsunuz?
-              </h3>
-              <p className="text-gray-300 mb-6">
-                Alternatif araçlar, detaylı karşılaştırma ve karar önerileri için
+            {/* Premium bilgilendirme */}
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-6 text-center">
+              <p className="text-gray-300 text-sm">
+                Detaylı karşılaştırma raporları ve alternatif araç önerileri yakında hizmetinizde olacak.
               </p>
-              <a
-                href="/odeme?product=rapor"
-                className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg transition-all text-lg"
-              >
-                Tam Raporu Aç - 99 TL
-              </a>
             </div>
 
             {/* Back Button */}

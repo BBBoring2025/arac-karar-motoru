@@ -39,19 +39,9 @@ export default function Home() {
         "MTV hesaplamaları GİB resmi tarifelerine dayandığı için yüksek kesinlik sunar. Yakıt, sigorta ve otoyol hesaplamaları tahmini olup gerçek kullanıma göre değişiklik gösterebilir. Her hesaplama kaleminde güven seviyesi (kesin/yüksek/tahmini) açıkça belirtilir.",
     },
     {
-      question: "Para iade garantisi var mı?",
-      answer:
-        "Evet, 30 gün içinde hiçbir soru sorulmaksızın para iade garantisi sunuyoruz. Raporunuzdan memnun değilseniz, ödediğiniz tutarı tamamen geri alabilirsiniz.",
-    },
-    {
       question: "Hangi araçlar destekleniyor?",
       answer:
         "Türkiye pazarındaki 35+ markanın 160'tan fazla popüler modeli desteklenmektedir. TOGG'dan BMW'ye, Dacia'dan Porsche'a kadar geniş yelpaze. Aracınız listede yoksa iletişim formu aracılığıyla talep edebilirsiniz.",
-    },
-    {
-      question: "B2B widget nedir?",
-      answer:
-        "Araç satıcıları, oto finansman şirketleri ve otomotiv portalları için özel widget hizmeti sunuyoruz. Web sitenizde gömülebilen araç değerleme aracı sayesinde müşteriniz sitede kalırken analizler yapabilir.",
     },
     {
       question: "Metodoloji nasıl çalışır?",
@@ -104,7 +94,7 @@ export default function Home() {
       icon: BarChart3,
       title: "Akıllı Karşılaştır",
       description:
-        "3 alternatif araçla yan yana Toplam Sahip Olma Maliyeti (TCO) kıyaslaması yap. En uygun aracı bul.",
+        "Farklı araçları yan yana Toplam Sahip Olma Maliyeti (TCO) bazında kıyasla. En uygun aracı bul.",
     },
     {
       icon: CheckCircle2,
@@ -142,13 +132,11 @@ export default function Home() {
     {
       name: "Ticari",
       price: 249,
-      description: "Kurumsal kullanım ve B2B",
+      description: "Kurumsal kullanım (yakında)",
       features: [
-        "Sınırsız araç analizi",
+        "Toplu araç analizi",
         "Kurumsal raporlama",
-        "Widget entegrasyonu",
         "Teknik destek",
-        "İş ortaklığı seçenekleri",
       ],
     },
   ];
@@ -394,11 +382,9 @@ export default function Home() {
                 <p className="text-orange-100 text-sm mb-6">
                   3 araçla detaylı karşılaştırma
                 </p>
-                <Link href="/rapor">
-                  <Button variant="primary" className="w-full mb-6">
-                    Raporunu Al
-                  </Button>
-                </Link>
+                <div className="w-full mb-6 py-3 bg-gray-600 text-gray-300 font-semibold rounded-lg text-center text-sm">
+                  Yakında Aktif Olacak
+                </div>
                 <ul className="space-y-3 text-left text-sm">
                   {["3 aracın yan yana analizi", "Kategori bazlı karşılaştırma", "Fark analizi", "Karar tavsiyesi", "PDF rapor indir"].map((feature, i) => (
                     <li key={i} className="flex items-start gap-2">
@@ -526,7 +512,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <CTABanner
             title="İlk adımı at. Aracının gerçek maliyetini öğren."
-            description="Birkaç dakikada detaylı analiz raporunu al ve doğru kararı ver. 30 gün para iade garantisi ile riskisiz dene."
+            description="Birkaç dakikada detaylı analiz raporunu al ve doğru kararı ver. Ücretsiz araçlarla hemen başla."
             buttonText="Ücretsiz Hesapla"
           />
         </div>

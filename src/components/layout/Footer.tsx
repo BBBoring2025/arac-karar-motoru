@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Mail, Phone } from "lucide-react";
+import { Mail } from "lucide-react";
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -55,13 +55,6 @@ const Footer: React.FC = () => {
                 <Mail className="w-4 h-4" />
                 info@arackararmotoru.com
               </a>
-              <a
-                href="tel:+901234567890"
-                className="flex items-center gap-2 text-blue-100 hover:text-orange-400 transition-colors text-sm"
-              >
-                <Phone className="w-4 h-4" />
-                +90 (212) 123 45 67
-              </a>
             </div>
           </div>
         </div>
@@ -72,7 +65,7 @@ const Footer: React.FC = () => {
         {/* Data Freshness Notice */}
         <div className="text-center mb-6">
           <p className="text-blue-200 text-xs">
-            Tüm veriler 5 Nisan 2026 itibarıyla günceldir. Hesaplamalar resmi kurum tarifelerine dayanmaktadır.
+            Veriler periyodik olarak güncellenmektedir. Hesaplamalar resmi kurum tarifelerine dayanmaktadır.
           </p>
         </div>
 
@@ -87,7 +80,7 @@ const Footer: React.FC = () => {
           <div className="flex items-center gap-3 text-sm">
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 text-orange-300">
               <span className="w-2 h-2 bg-orange-400 rounded-full"></span>
-              Son güncelleme: 5 Nisan 2026
+              Veriler periyodik olarak güncellenir
             </span>
           </div>
         </div>

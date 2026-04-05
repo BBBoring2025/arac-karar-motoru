@@ -64,10 +64,10 @@ export default function KVKKPage() {
               4. Veri Aktarımı
             </h2>
             <p className="text-gray-600 text-sm leading-relaxed">
-              Kişisel verileriniz, ödeme hizmet sağlayıcısı (iyzico) ve
-              altyapı sağlayıcıları (Supabase, Vercel) ile yalnızca hizmet
-              sunumu amacıyla paylaşılmaktadır. Pazarlama amacıyla üçüncü
-              taraflarla paylaşılmaz.
+              Kişisel verileriniz, altyapı sağlayıcıları (Supabase, Vercel) ile
+              yalnızca hizmet sunumu amacıyla paylaşılmaktadır. Ödeme altyapısı
+              entegre edildiğinde ilgili ödeme hizmet sağlayıcısı ile de
+              paylaşılacaktır. Pazarlama amacıyla üçüncü taraflarla paylaşılmaz.
             </p>
           </section>
 
