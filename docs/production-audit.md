@@ -1,65 +1,95 @@
-# Production Audit Report — Arac Karar Motoru
+# Production Audit Report — Araç Karar Motoru
 
-**Tarih**: 5 Nisan 2026
-**Kapsam**: Tum kullanici-facing sayfalar, veri katmani, hesaplama motorlari
+**Tarih**: 5 Nisan 2026 (son güncelleme)
+**Kapsam**: Tüm kullanıcı-facing sayfalar, veri katmanı, hesaplama motorları, modül mimarisi
 
-## 1. Canli Sitede Verilen Sozler vs Gerceklik
+## 1. Canlı Sitede Verilen Sözler vs Gerçeklik
 
-### Dogru Sozler
+### Doğru Sözler ✓
+- 160+ araç modeli, 35+ marka → Doğru (161 araç, araclar.ts)
+- 5 ücretsiz hesaplama aracı → Doğru (MTV, otoyol, yakıt, muayene, rota)
+- 81 il, 969 ilçe rota hesaplama → Doğru (graf connectivity test: 3240/3240 çift)
+- GİB MTV tarifeleri → Doğru (sabit lookup tablosu, formül YOK)
+- KGM köprü/tünel ücretleri → Doğru (6 köprü/tünel, toll-segments.ts)
+- PETDER yakıt referans fiyatları → Doğru (snapshot, periyodik güncelleme)
 
-- 160+ arac modeli, 35+ marka: Dogru (161 arac, araclar.ts)
-- 5 ucretsiz hesaplama araci: Dogru (MTV, otoyol, yakit, muayene, rota)
-- 81 il, 969 ilce rota hesaplama: Dogru (graph connectivity test: 3240/3240 cift)
-- GIB MTV tarifeleri: Dogru (sabit lookup tablosu, formul degil)
-- KGM kopru/tunel ucretleri: Dogru (6 kopru/tunel, toll-segments.ts)
-- PETDER yakit referans fiyatlari: Dogru (snapshot, periyodik guncelleme)
+### Düzeltilen Sorunlar (Phase 1)
 
-### Duzeltilen Sorunlar
-
-| Sorun | Durum | Cozum |
+| Sorun | Durum | Çözüm |
 |-------|-------|-------|
-| Sahte telefon numarasi (+90 212 123 45 67) | Duzeltildi | Kaldirildi |
-| Mock odeme akisi (iyzico entegre degil) | Duzeltildi | "Yakinda" sayfasina donusturuldu |
-| Sahte premium icerik (hardcoded araclar) | Duzeltildi | Kaldirildi |
-| Para iade garantisi (odeme yok) | Duzeltildi | Iddia kaldirildi |
-| B2B widget iddiasi (yok) | Duzeltildi | FAQ'dan kaldirildi |
-| iyzico guvencesi iddiasi (entegre degil) | Duzeltildi | Kosullu dile cevrildi |
-| Sabit "5 Nisan 2026" tarihi | Duzeltildi | "Periyodik guncelleme" |
+| Sahte telefon (+90 212 123 45 67) | ✅ Düzeltildi | Kaldırıldı |
+| Mock ödeme akışı | ✅ Düzeltildi | "Yakında" sayfasına dönüştürüldü |
+| Sahte premium içerik (hardcoded araçlar) | ✅ Düzeltildi | Kaldırıldı |
+| Para iade garantisi (ödeme yok) | ✅ Düzeltildi | İddia kaldırıldı |
+| B2B widget iddiası (yok) | ✅ Düzeltildi | FAQ'dan kaldırıldı |
+| iyzico güvencesi iddiası (entegre değil) | ✅ Düzeltildi | Koşullu dile çevrildi |
+| Sabit tarih ifadeleri | ✅ Düzeltildi | Dinamik referans + "periyodik güncelleme" |
 
-## 2. Veri Guvenilirlik Matrisi
+## 2. Veri Güvenilirlik Matrisi
 
-| Veri Kalemi | Kaynak | Guven | Son Guncelleme | sourceUrl |
-|-------------|--------|-------|----------------|-----------|
-| MTV tarifeleri | GIB | Kesin | 2026-01-01 | gib.gov.tr |
-| Muayene ucretleri | TUVTURK | Kesin | 2026-01-01 | tuvturk.com.tr |
-| Kopru/tunel ucretleri | KGM | Kesin | 2026-01-01 | kgm.gov.tr |
-| Otoyol segment ucretleri | KGM tahmini | Tahmini | 2026-04-05 | kgm.gov.tr |
-| Yakit fiyatlari | PETDER | Yaklasik | 2026-01-15 | petder.org.tr |
-| Amortisman oranlari | OYDER | Tahmini | 2026-01-15 | oyder.org.tr |
-| Noter ucretleri | Adalet Bakanligi | Kesin | 2026-01-01 | noterlerbirligi.org.tr |
-| Sigorta tahminleri | OYDER benchmark | Tahmini | — | — |
-| Bakim maliyetleri | OYDER benchmark | Tahmini | — | — |
-| Arac veritabani | OYDER/uretici | Yuksek | 2026-04-05 | oyder.org.tr |
+| Veri Kalemi | Kaynak | Güven | Son Güncelleme | sourceUrl | Metadata |
+|-------------|--------|-------|----------------|-----------|----------|
+| MTV tarifeleri | GİB | Kesin | 2026-01-01 | gib.gov.tr | ✅ |
+| Muayene ücretleri | TÜVTÜRK | Kesin | 2026-01-01 | tuvturk.com.tr | ✅ |
+| Köprü/tünel ücretleri | KGM | Kesin | 2026-01-01 | kgm.gov.tr | ✅ |
+| Otoyol segment ücretleri | KGM tahmini | Tahmini | 2026-04-05 | kgm.gov.tr | ✅ |
+| Yakıt fiyatları | PETDER | Yaklaşık | 2026-01-15 | petder.org.tr | ✅ |
+| Amortisman oranları | OYDER | Tahmini | 2026-01-15 | oyder.org.tr | ✅ |
+| Noter ücretleri | Adalet Bakanlığı | Kesin | 2026-01-01 | noterlerbirligi.org.tr | ✅ |
+| Sigorta tahminleri | OYDER benchmark | Tahmini | — | — | ✅ (calculations.ts) |
+| Bakım maliyetleri | OYDER benchmark | Tahmini | — | — | ✅ (calculations.ts) |
+| Araç veritabanı | OYDER/üretici | Yüksek | 2026-04-05 | oyder.org.tr | ✅ |
 
-## 3. Kalan Bilinen Eksiklikler (P1-P2)
+**Not**: Tüm veri dosyalarında `sourceLabel`, `sourceUrl`, `effectiveDate`, `confidence` alanları mevcut.
 
-### P1 (Orta oncelik)
+## 3. Modül Mimarisi
 
-- Odeme sistemi henuz aktif degil (iyzico entegrasyonu bekliyor)
-- Admin paneli Supabase tablolarina bagimli (tablolar olusturulmali)
-- Premium rapor PDF ciktisi henuz uretilmiyor
+| Modül | Dizin | Durum | Testler |
+|-------|-------|-------|---------|
+| MTV Hesaplama | `src/lib/mtv/` | ✅ Ayrı modül | 24 golden test |
+| Muayene Hesaplama | `src/lib/muayene/` | ✅ Ayrı modül | 15 golden test |
+| Rota Motoru | `src/lib/route/` | ✅ Tam | 27 route + 16 edge case + 3240 graf |
+| Ödeme | `src/lib/payment/` | ✅ Stub hazır | — (iyzico bekleniyor) |
+| Rapor Üretici | `src/lib/report/` | ✅ Generator hazır | — |
+| Analytics | `src/lib/analytics/` | ✅ Layer hazır | — (provider bekleniyor) |
+| Referans Veri Şemaları | `src/data/reference/` | ✅ 9 kategori | — |
 
-### P2 (Dusuk oncelik)
+## 4. Erişilebilirlik (A11y)
 
-- Analytics/event tracking yok
-- Accessibility (a11y) tam audit yapilmadi
-- Mobile UX optimizasyonu tamamlanmadi
-- Sigorta ve bakim tahminleri tek-kaynakli (OYDER)
+| Düzeltme | Durum |
+|----------|-------|
+| Skip navigation ("Ana içeriğe geç") | ✅ |
+| SearchableCombobox unique ID (useId) | ✅ |
+| aria-activedescendant | ✅ |
+| Error messages role="alert" | ✅ |
+| Results area aria-live="polite" | ✅ |
+| Footer nav landmark | ✅ |
+| Mobile menu aria-label + aria-expanded | ✅ |
+| Form label/input association (htmlFor/id) | ✅ |
 
-## 4. Teknik Saglik
+## 5. Kalan Bilinen Eksiklikler
 
-- TypeScript: 0 hata (strict mode)
-- Lint: 0 hata
-- Build: Basarili (21 statik + 3 dinamik sayfa)
-- Test: 10 route test + 8 edge case + 3240 graf baglanti testi = Tumu geciyor
-- Deployment: Vercel production (arac-karar-motoru.vercel.app)
+### P1 (Orta öncelik)
+- Ödeme sistemi henüz aktif değil (iyzico merchant hesabı + env vars gerekli)
+- Admin paneli Supabase tablolarına bağımlı (migration çalıştırılmalı)
+- Premium rapor PDF çıktısı henüz üretilmiyor
+
+### P2 (Düşük öncelik)
+- Analytics provider entegrasyonu (GA4/Plausible — layer hazır)
+- Mobile UX optimizasyonu detay testi
+- Sigorta ve bakım tahminleri tek-kaynaklı (OYDER)
+
+## 6. Teknik Sağlık
+
+- **TypeScript**: 0 hata (strict mode, `any` yok)
+- **Lint**: 0 hata
+- **Build**: Başarılı (21 statik + 3 dinamik sayfa)
+- **Testler**:
+  - Route engine: 27 assertion ✅
+  - MTV golden: 24 assertion ✅
+  - Muayene golden: 15 assertion ✅
+  - Edge cases: 16 assertion ✅
+  - Graf connectivity: 3240 çift ✅
+  - **Toplam: 3322 assertion, 0 hata**
+- **Deployment**: Vercel production (arac-karar-motoru.vercel.app)
+- **GitHub**: github.com/BBBoring2025/arac-karar-motoru (private)

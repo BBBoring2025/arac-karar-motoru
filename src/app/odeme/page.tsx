@@ -3,36 +3,23 @@
 import React from 'react';
 import { Clock, ArrowLeft, Info } from 'lucide-react';
 import Link from 'next/link';
+import { PRODUCTS } from '@/lib/payment';
 
 /**
  * Ödeme Sayfası — Henüz aktif değil
  * iyzico entegrasyonu tamamlandığında bu sayfa gerçek ödeme akışına dönüşecek.
+ * Ürün verileri src/lib/payment/products.ts'den gelir.
  */
 export default function OdemePage() {
-  const plans = [
-    {
-      name: 'Tekli Rapor',
-      price: '99',
-      description: 'Tek bir araç için detaylı TCO analizi',
-      features: [
-        'Detaylı maliyet analizi',
-        '12 ve 36 ay seçeneği',
-        'KM başı maliyet hesaplaması',
-        'Finansal öneriler',
-      ],
-    },
-    {
-      name: 'Karşılaştırma Paketi',
-      price: '149',
-      description: 'Birden fazla araç karşılaştırma raporu',
-      features: [
-        'Tüm tekli rapor özellikleri',
-        'Araçların yan yana karşılaştırması',
-        'Al/Kirala/Bekle analizi',
-        'En uygun seçim önerisi',
-      ],
-    },
-  ];
+  // Ürün kataloğundan ilk 2 planı al (ticari henüz aktif değil)
+  const plans = PRODUCTS.filter(p => p.id !== 'ticari').map(p => ({
+    name: p.name,
+    price: String(p.price),
+    description: p.description,
+    features: p.id === 'tekli'
+      ? ['Detaylı maliyet analizi', '12 ve 36 ay seçeneği', 'KM başı maliyet hesaplaması', 'Finansal öneriler']
+      : ['Tüm tekli rapor özellikleri', 'Araçların yan yana karşılaştırması', 'Al/Kirala/Bekle analizi', 'En uygun seçim önerisi'],
+  }));
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1B2A4A] to-[#0F1722]">

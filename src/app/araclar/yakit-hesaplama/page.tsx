@@ -126,7 +126,10 @@ export default function YakitHesaplama() {
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Yakıt Fiyatı ({selectedFuelData?.pricePerUnit})</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Yakıt Fiyatı ({selectedFuelData?.pricePerUnit})</label>
+            <p className="text-xs text-slate-500 mb-2">
+              Referans fiyat — PETDER ortalaması ({fuelData.effectiveDate || fuelData.lastUpdated})
+            </p>
             <Input
               type="number"
               step="0.01"
@@ -225,8 +228,8 @@ export default function YakitHesaplama() {
 
         {/* Güncellik İbaresi */}
         <div className="text-center text-xs text-gray-500 py-3 border-t border-gray-200">
-          <p>Kaynak: PETDER Güncel Fiyatları | Son güncelleme: 5 Nisan 2026</p>
-          <p className="mt-1">Veriler 5 Nisan 2026 itibarıyla günceldir.</p>
+          <p>Kaynak: {fuelData.sourceLabel || 'PETDER'} | Veri tarihi: {fuelData.effectiveDate || fuelData.lastUpdated}</p>
+          <p className="mt-1">Fiyatlar referans niteliğindedir. Güncel pompa fiyatları farklılık gösterebilir.</p>
         </div>
 
         <Card variant="highlighted" className="cursor-pointer hover:shadow-lg">
