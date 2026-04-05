@@ -67,6 +67,14 @@ function getSegmentFee(
   vehicleClass: string,
   useNightRate: boolean
 ): number {
+  const validClasses = ['motosiklet', '1', '2', '3', '4', '5'];
+  if (!validClasses.includes(vehicleClass)) {
+    console.warn(
+      `[TollCalculator] Geçersiz araç sınıfı: "${vehicleClass}" — geçerli değerler: ${validClasses.join(', ')}. 0 TL döndürülüyor.`
+    );
+    return 0;
+  }
+
   const fees = segment.vehicleClassFees;
   let fee: number;
 

@@ -48,7 +48,7 @@ export default function MetodolojPage() {
     },
     {
       component: 'Bakım Maliyetleri',
-      source: 'Yetkili Servislerin Ortalama Ücret Listesi',
+      source: 'OYDER Sektör Benchmark Verileri',
       reliability: 'Tahmini',
       lastUpdate: 'Mart 2026',
     },
@@ -56,7 +56,7 @@ export default function MetodolojPage() {
       component: 'Yakıt Fiyatları',
       source: 'PETDER / Güncel Pazar Verileri',
       reliability: 'Ortalama',
-      lastUpdate: 'Günlük Güncelleme',
+      lastUpdate: 'Periyodik Güncelleme',
       url: 'https://www.petder.org.tr',
     },
     {
