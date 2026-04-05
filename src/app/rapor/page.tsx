@@ -7,6 +7,7 @@ import {
   Wrench,
   TrendingDown,
   ArrowRight,
+  Download,
 } from 'lucide-react';
 import { calculateTCO } from '@/lib/calculations';
 import { vehicleDatabase } from '@/data/araclar';
@@ -68,6 +69,7 @@ export default function RaporPage() {
 
   const [tcoResult, setTcoResult] = useState<TCOResult | null>(null);
   const [period, setPeriod] = useState<'12ay' | '36ay'>('36ay');
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
@@ -152,6 +154,19 @@ export default function RaporPage() {
     setTcoResult(result);
     setStep('results');
   };
+
+  async function handleDownloadPDF() {
+    if (!tcoResult) return;
+    setPdfLoading(true);
+    try {
+      const { generateReport } = await import('@/lib/report');
+      const { generatePDF } = await import('@/lib/report/pdf-generator');
+      const rapor = generateReport(tcoResult, period === '12ay' ? '12ay' : '36ay');
+      generatePDF(rapor);
+    } finally {
+      setPdfLoading(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1B2A4A] to-[#0F1722]">
@@ -690,6 +705,16 @@ export default function RaporPage() {
                 </table>
               </div>
             </div>
+
+            {/* PDF Download */}
+            <button
+              onClick={handleDownloadPDF}
+              disabled={pdfLoading}
+              className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2"
+            >
+              <Download className="w-5 h-5" />
+              {pdfLoading ? 'PDF Hazırlanıyor...' : 'PDF İndir'}
+            </button>
 
             {/* Premium bilgilendirme */}
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-6 text-center">

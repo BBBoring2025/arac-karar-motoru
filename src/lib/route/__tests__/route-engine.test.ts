@@ -280,6 +280,42 @@ try {
   console.error(`  ✗ Test 10 hata: ${(e as Error).message}`);
 }
 
+// ─── TEST 11: İzmit → Kaş (uzun mesafe, çoklu segment) ──────────────────────
+console.log('\nTest 11: İzmit (Kocaeli) → Kaş (Antalya)');
+try {
+  const result = calculateRoute({
+    ...BASE_PARAMS,
+    startDistrictId: '41-izmit',
+    endDistrictId: '07-kas',
+  });
+
+  assert(result !== null, 'Rota bulundu');
+  assertRange(result.oneWay.distanceKm, 500, 900, 'Mesafe');
+  assert(result.oneWay.fuelCost > 0, 'Yakıt maliyeti > 0');
+  assert(result.oneWay.totalCost > 0, 'Toplam maliyet > 0');
+  assert(result.path.nodeIds.length >= 3, `Path en az 3 node: ${result.path.nodeIds.length}`);
+} catch (e) {
+  failed++;
+  console.error(`  ✗ Test 11 hata: ${(e as Error).message}`);
+}
+
+// ─── TEST 12: Toll breakdown segment tipi kontrolü ──────────────────────────
+console.log('\nTest 12: Toll breakdown segment tipi (köprü vs otoyol)');
+try {
+  const result = calculateRoute({
+    ...BASE_PARAMS,
+    startDistrictId: '34-kadikoy',
+    endDistrictId: '16-osmangazi',
+  });
+
+  assert(result.tollBreakdown.length > 0, 'Toll breakdown dolu');
+  const bridgeToll = result.tollBreakdown.find(t => t.type === 'köprü');
+  assert(bridgeToll !== undefined, `Köprü segmenti var: ${bridgeToll?.name || 'yok'}`);
+} catch (e) {
+  failed++;
+  console.error(`  ✗ Test 12 hata: ${(e as Error).message}`);
+}
+
 // ─── SONUÇ ──────────────────────────────────────────────────────────────────
 console.log(`\n${'='.repeat(50)}`);
 console.log(`Sonuç: ${passed} geçti, ${failed} kaldı`);

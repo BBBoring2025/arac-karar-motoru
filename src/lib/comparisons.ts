@@ -11,6 +11,7 @@ import {
   AlternatifArac,
 } from "./types";
 import { calculateTCO } from "./calculations";
+import { vehicleDatabase, Vehicle } from "@/data/araclar";
 
 /**
  * Alternatif araçlar bul
@@ -226,63 +227,41 @@ export function generateKararOzeti(
  */
 
 /**
- * Araç veritabanı oluştur (simüle)
+ * Segment mapping: Vehicle.segment → AracBilgisi.segment
+ * Vehicle DB'deki segment tipi (A/B/C/SUV/Sedan vb.) → TCO segmenti (kompakt/sedan/suv vb.)
+ */
+function mapSegment(vehicleSegment: string): AracBilgisi['segment'] {
+  const mapping: Record<string, AracBilgisi['segment']> = {
+    'A': 'kompakt', 'B': 'kompakt', 'Hatchback': 'kompakt',
+    'C': 'sedan', 'D': 'sedan', 'Sedan': 'sedan',
+    'E': 'sedan', 'F': 'sedan',
+    'SUV': 'suv',
+    'Ticari': 'kargo',
+  };
+  return mapping[vehicleSegment] || 'sedan';
+}
+
+/**
+ * Gerçek araç veritabanından AracBilgisi[] oluştur
+ * 161 araçlık vehicleDatabase'den çeker (mock veri YOK)
  */
 function generateAracDatabase(): AracBilgisi[] {
-  return [
-    {
-      id: "arac_1",
-      marka: "Toyota",
-      model: "Corolla",
-      yil: 2023,
-      fiyat: 850000,
-      motorHacmi: 1200,
-      yakitTupu: "benzin",
-      tahminiYakitTuketimi: 6.5,
-      yillikKmTahmini: 15000,
-      segment: "sedan",
-      kullanilanMi: false,
-    },
-    {
-      id: "arac_2",
-      marka: "Honda",
-      model: "Civic",
-      yil: 2022,
-      fiyat: 750000,
-      motorHacmi: 1500,
-      yakitTupu: "benzin",
-      tahminiYakitTuketimi: 7.0,
-      yillikKmTahmini: 15000,
-      segment: "sedan",
-      kullanilanMi: true,
-    },
-    {
-      id: "arac_3",
-      marka: "Hyundai",
-      model: "i20",
-      yil: 2024,
-      fiyat: 650000,
-      motorHacmi: 1000,
-      yakitTupu: "benzin",
-      tahminiYakitTuketimi: 5.8,
-      yillikKmTahmini: 12000,
-      segment: "kompakt",
-      kullanilanMi: false,
-    },
-    {
-      id: "arac_4",
-      marka: "Volkswagen",
-      model: "Passat",
-      yil: 2021,
-      fiyat: 600000,
-      motorHacmi: 1600,
-      yakitTupu: "dizel",
-      tahminiYakitTuketimi: 5.5,
-      yillikKmTahmini: 20000,
-      segment: "sedan",
-      kullanilanMi: true,
-    },
-  ];
+  return vehicleDatabase.vehicles.map((v: Vehicle) => ({
+    id: v.id,
+    marka: v.brand,
+    model: v.model,
+    yil: v.yearRange.max,
+    fiyat: v.avgMarketPrice,
+    motorHacmi: v.engineSize,
+    yakitTupu: v.fuelType,
+    tahminiYakitTuketimi: v.avgConsumption,
+    yillikKmTahmini: 15000, // TÜİK ortalaması — referans: src/lib/calculations.ts
+    segment: mapSegment(v.segment),
+    kaskoTahmini: v.insurancePriceRange.min,
+    trafikSigortasiTahmini: 500,
+    bakimMaliyetiTahmini: v.maintenanceCostYearly,
+    kullanilanMi: false,
+  }));
 }
 
 /**
