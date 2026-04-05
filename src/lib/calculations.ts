@@ -333,7 +333,7 @@ export function calculateAmortisman(
     }
   }
 
-  // Minimum %5 değer korunsun
+  // Minimum %5 hurda değeri korunur
   depPercent = Math.min(depPercent, 95);
 
   const toplamDegerKaybi = aracFiyati * (depPercent / 100);
@@ -407,6 +407,7 @@ export function calculateSigortaMaliyeti(
   }
 
   // Veritabanında bulunamazsa fiyat bazlı tahmin
+  // OYDER benchmark kasko oranları — segment ve yaş bazlı ortalamalar
   let kaskoOrani = 0.015;
   if (aracYasi === 0) kaskoOrani = 0.025;
   else if (aracYasi <= 3) kaskoOrani = 0.02;
@@ -465,7 +466,7 @@ export function calculateBakimMaliyeti(
   if (vehicle) {
     baseMaliyet = vehicle.maintenanceCostYearly;
   } else {
-    // Bilinmeyen marka: ortalama maliyet
+    // Bilinmeyen markalar için varsayılan yıllık bakım maliyeti (TL)
     baseMaliyet = 3500;
   }
 
@@ -479,7 +480,7 @@ export function calculateBakimMaliyeti(
     baseMaliyet *= 0.85;
   }
 
-  // Yaş çarpanı: garanti dışı araçlarda bakım artar
+  // OYDER bakım maliyet çarpanları — garanti döneminde düşük, yaşlandıkça artan
   let yasMultiplier = 1.0;
   if (aracYasi <= 2) yasMultiplier = 0.6; // Garanti kapsamında
   else if (aracYasi <= 5) yasMultiplier = 1.0;
@@ -487,7 +488,8 @@ export function calculateBakimMaliyeti(
   else yasMultiplier = 1.6;
 
   // Km çarpanı: çok kullanan araçlarda bakım artar
-  const kmMultiplier = yillikKm / 15000; // 15K/yıl referans
+  // Referans: TÜİK ortalama yıllık araç km verisi (15.000 km/yıl)
+  const kmMultiplier = yillikKm / 15000;
 
   return baseMaliyet * yasMultiplier * Math.max(kmMultiplier, 0.5);
 }

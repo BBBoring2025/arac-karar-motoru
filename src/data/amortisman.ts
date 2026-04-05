@@ -32,6 +32,11 @@ export interface SegmentAmortisman {
 export interface AmortismanData {
   year: number;
   lastUpdated: string;
+  sourceLabel: string;
+  sourceUrl: string;
+  effectiveDate: string;
+  confidence: 'kesin' | 'yaklaşık' | 'tahmini';
+  notes?: string;
   segments: SegmentAmortisman[];
   assumptions: {
     averageKmPerYear: number;
@@ -42,6 +47,11 @@ export interface AmortismanData {
 export const amortismanData: AmortismanData = {
   year: 2026,
   lastUpdated: '2026-01-15',
+  sourceLabel: 'OYDER Sektör Verileri ve İkinci El Pazar Analizi',
+  sourceUrl: 'https://www.oyder.org.tr',
+  effectiveDate: '2026-01-15',
+  confidence: 'tahmini' as const,
+  notes: 'Değer kaybı oranları sektör ortalamaları baz alınmıştır. Gerçek değer kaybı araca, kullanıma ve pazar koşullarına göre değişir.',
   segments: [
     {
       id: 'sedan',

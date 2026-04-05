@@ -8,7 +8,7 @@ import {
   KarsilastirmaResult,
   KararOzeti,
   TCOResult,
-  AlterbatifArac,
+  AlternatifArac,
 } from "./types";
 import { calculateTCO } from "./calculations";
 
@@ -21,7 +21,7 @@ import { calculateTCO } from "./calculations";
 export function findAlternatifler(
   arac: AracBilgisi,
   budget: number
-): AlterbatifArac[] {
+): AlternatifArac[] {
   // Simule edilmiş araç veritabanı
   const veriTabani = generateAracDatabase();
 
@@ -90,7 +90,7 @@ export function karsilastir(araclar: AracBilgisi[]): KarsilastirmaResult {
   );
 
   // En düşük KM başına maliyet
-  const enDusukkKmBasiMaliyet = tcoSonuclari.reduce((min, current) =>
+  const enDusukKmBasiMaliyet = tcoSonuclari.reduce((min, current) =>
     current.kmBasiMaliyet < min.kmBasiMaliyet ? current : min
   );
 
@@ -110,7 +110,7 @@ export function karsilastir(araclar: AracBilgisi[]): KarsilastirmaResult {
     araclar: tcoSonuclari,
     enUcuzSonuc,
     enKomforluSonuc,
-    enDusukkKmBasiMaliyet,
+    enDusukKmBasiMaliyet,
     tavsiyelensinSirasi,
   };
 }
@@ -134,7 +134,7 @@ export function generateKararOzeti(
   };
 
   const nedenler: string[] = [];
-  const risikler: string[] = [];
+  const riskler: string[] = [];
   const firsatlar: string[] = [];
 
   // AL puanlaması
@@ -143,7 +143,7 @@ export function generateKararOzeti(
     firsatlar.push("Düşük KM başına maliyet");
   } else {
     puanlar.al -= 10;
-    risikler.push("Yüksek KM başına maliyet");
+    riskler.push("Yüksek KM başına maliyet");
   }
 
   if (tco.aracBilgisi.kullanilanMi) {
@@ -151,7 +151,7 @@ export function generateKararOzeti(
     firsatlar.push("İkinci el araç (daha ucuz)");
   } else {
     puanlar.al -= 15;
-    risikler.push("Yeni araç (yüksek fiyat)");
+    riskler.push("Yeni araç (yüksek fiyat)");
   }
 
   if (tco.ortalamAylikMaliyet < 5000) {
@@ -159,7 +159,7 @@ export function generateKararOzeti(
     nedenler.push("Uygun aylık maliyet");
   } else {
     puanlar.al -= 20;
-    risikler.push("Yüksek aylık maliyet");
+    riskler.push("Yüksek aylık maliyet");
   }
 
   // KIRALA puanlaması
@@ -215,7 +215,7 @@ export function generateKararOzeti(
     tavsiye,
     puanlar: normalizedPuanlar,
     nedenler,
-    risikler,
+    riskler,
     firsatlar,
     beklentiler,
   };

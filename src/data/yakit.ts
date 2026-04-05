@@ -29,6 +29,11 @@ export interface VehicleFuelConsumption {
 export interface FuelData {
   year: number;
   lastUpdated: string;
+  sourceLabel: string;
+  sourceUrl: string;
+  effectiveDate: string;
+  confidence: 'kesin' | 'yaklaşık' | 'tahmini';
+  notes?: string;
   fuelTypes: FuelType[];
   vehicleConsumption: VehicleFuelConsumption[];
 }
@@ -36,6 +41,11 @@ export interface FuelData {
 export const fuelData: FuelData = {
   year: 2026,
   lastUpdated: '2026-01-15',
+  sourceLabel: 'PETDER Akaryakıt Fiyat Ortalamaları',
+  sourceUrl: 'https://www.petder.org.tr',
+  effectiveDate: '2026-01-15',
+  confidence: 'yaklaşık' as const,
+  notes: 'Fiyatlar referans niteliğindedir. Güncel pompa fiyatları farklılık gösterebilir.',
   fuelTypes: [
     {
       id: 'benzin',

@@ -23,6 +23,10 @@ export interface TollRoute {
 export interface TollData {
   year: number;
   lastUpdated: string;
+  sourceLabel: string;
+  sourceUrl: string;
+  effectiveDate: string;
+  confidence: 'kesin' | 'yaklaşık' | 'tahmini';
   vehicleClasses: {
     [key: string]: {
       id: string;
@@ -42,9 +46,14 @@ export interface TollData {
  * 5: Kamyon/Tır (Heavy commercial >3.5 ton)
  */
 
+// Not: Köprü/tünel canonical verileri src/data/routes/toll-segments.ts dosyasındadır.
 export const tollData: TollData = {
   year: 2026,
   lastUpdated: '2026-04-05',
+  sourceLabel: 'KGM 2026 HGS/OGS Ücret Tarifesi',
+  sourceUrl: 'https://www.kgm.gov.tr',
+  effectiveDate: '2026-01-01',
+  confidence: 'kesin' as const,
   vehicleClasses: {
     '1': {
       id: '1',

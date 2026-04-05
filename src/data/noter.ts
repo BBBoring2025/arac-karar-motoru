@@ -25,6 +25,10 @@ export interface NoterService {
 export interface NoterData {
   year: number;
   lastUpdated: string;
+  sourceLabel: string;
+  sourceUrl: string;
+  effectiveDate: string;
+  confidence: 'kesin' | 'yaklaşık' | 'tahmini';
   services: NoterService[];
   generalInfo: {
     vat: number; // KDV oranı (%)
@@ -36,6 +40,10 @@ export interface NoterData {
 export const noterData: NoterData = {
   year: 2026,
   lastUpdated: '2026-01-01',
+  sourceLabel: 'Adalet Bakanlığı 2026 Noter Ücret Tarifesi',
+  sourceUrl: 'https://www.noterlerbirligi.org.tr',
+  effectiveDate: '2026-01-01',
+  confidence: 'kesin' as const,
   services: [
     {
       id: 'arac_satis_muhasebesi',

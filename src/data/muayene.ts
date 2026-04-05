@@ -22,6 +22,10 @@ export interface VehicleTypeInspection {
 export interface InspectionData {
   year: number;
   lastUpdated: string;
+  sourceLabel: string;
+  sourceUrl: string;
+  effectiveDate: string;
+  confidence: 'kesin' | 'yaklaşık' | 'tahmini';
   vehicleTypes: VehicleTypeInspection[];
   additionalFees: {
     [key: string]: number;
@@ -31,6 +35,10 @@ export interface InspectionData {
 export const inspectionData: InspectionData = {
   year: 2026,
   lastUpdated: '2026-01-01',
+  sourceLabel: 'TÜVTÜRK 2026 Muayene Ücret Tarifesi',
+  sourceUrl: 'https://www.tuvturk.com.tr',
+  effectiveDate: '2026-01-01',
+  confidence: 'kesin' as const,
   vehicleTypes: [
     {
       id: 'otomobil',

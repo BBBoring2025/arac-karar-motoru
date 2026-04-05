@@ -6,9 +6,28 @@
 /**
  * Güven Seviyesi: hesaplamanın ne kadar kesin olduğunu belirtir
  * "kesin" = resmi tarife verisi (GİB, TÜVTÜRK, KGM, noter)
+ * "yüksek" = doğrulanmış ancak değişkenlik gösterebilir
+ * "yaklaşık" = referans değerlerden türetilmiş
  * "tahmini" = sektör benchmark'ları, ortalamalar
  */
 export type GuvenSeviyesi = "kesin" | "tahmini";
+
+/**
+ * Veri güven seviyesi — daha ayrıntılı (yeni modüller için)
+ */
+export type DataConfidence = 'kesin' | 'yüksek' | 'yaklaşık' | 'tahmini';
+
+/**
+ * Referans veri metadata — her veri kaleminin kaynağı, tarihi ve güvenilirliği
+ */
+export interface ReferenceMeta {
+  sourceLabel: string;
+  sourceUrl?: string;
+  effectiveDate: string;
+  updatedAt: string;
+  confidence: DataConfidence;
+  notes?: string;
+}
 
 export interface GuvenBilgisi {
   seviye: GuvenSeviyesi;
@@ -31,7 +50,7 @@ export interface AracBilgisi {
   segment: "kompakt" | "sedan" | "suv" | "minivan" | "kargo";
   kaskoTahmini?: number;
   trafikSigortasiTahmini?: number;
-  bakimMaliiyeTahmini?: number;
+  bakimMaliyetiTahmini?: number;
   kullanilanMi: boolean; // Yeni mi, ikinci el mi
 }
 
@@ -164,7 +183,7 @@ export interface KarsilastirmaResult {
   araclar: TCOResult[];
   enUcuzSonuc: TCOResult;
   enKomforluSonuc: TCOResult;
-  enDusukkKmBasiMaliyet: TCOResult;
+  enDusukKmBasiMaliyet: TCOResult;
   tavsiyelensinSirasi: TCOResult[];
 }
 
@@ -179,7 +198,7 @@ export interface KararOzeti {
     bekle: number;
   };
   nedenler: string[];
-  risikler: string[];
+  riskler: string[];
   firsatlar: string[];
   beklentiler: {
     iyiSenaryo: string;
@@ -190,7 +209,7 @@ export interface KararOzeti {
 /**
  * Alternatif araç önerisi
  */
-export interface AlterbatifArac extends AracBilgisi {
+export interface AlternatifArac extends AracBilgisi {
   uyumlulukSkoru: number; // 0-100
   benzerlikler: string[];
   farklar: string[];

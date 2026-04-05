@@ -17,6 +17,10 @@ export interface MTVBracket {
 export interface MTVData {
   year: number;
   lastUpdated: string; // ISO date
+  sourceLabel: string;
+  sourceUrl: string;
+  effectiveDate: string;
+  confidence: 'kesin' | 'yaklaşık' | 'tahmini';
   gasoline: MTVBracket[];
   diesel: MTVBracket[];
   lpg: MTVBracket[];
@@ -29,6 +33,10 @@ export interface MTVData {
 export const mtvData: MTVData = {
   year: 2026,
   lastUpdated: '2026-01-01',
+  sourceLabel: 'GİB (Gelir İdaresi Başkanlığı) 2026 MTV Tebliği',
+  sourceUrl: 'https://www.gib.gov.tr',
+  effectiveDate: '2026-01-01',
+  confidence: 'kesin' as const,
   gasoline: [
     {
       id: 'gas_1',
