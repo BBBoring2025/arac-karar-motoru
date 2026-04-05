@@ -18,6 +18,7 @@ import TollBreakdownCard from '@/components/route/TollBreakdownCard';
 import TotalCostCard from '@/components/route/TotalCostCard';
 import RouteTimeline from '@/components/route/RouteTimeline';
 import RouteConfidenceNote from '@/components/route/RouteConfidenceNote';
+import { trackRouteCalculated, trackError } from '@/lib/analytics';
 
 export default function RotaMaliyetPage() {
   const [result, setResult] = useState<RouteResult | null>(null);
@@ -37,12 +38,18 @@ export default function RotaMaliyetPage() {
       try {
         const routeResult = calculateRoute(params);
         setResult(routeResult);
+        trackRouteCalculated(
+          routeResult.startDistrict.il,
+          routeResult.endDistrict.il,
+          routeResult.oneWay.distanceKm
+        );
         // Smooth scroll
         setTimeout(() => {
           resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
       } catch (e) {
         const message = e instanceof Error ? e.message : 'Bilinmeyen hata';
+        trackError('rota', message);
         if (message.includes('Rota bulunamadı')) {
           setError(
             'Bu güzergah için henüz veri bulunmuyor. Farklı bir il/ilçe deneyin.'
@@ -78,7 +85,7 @@ export default function RotaMaliyetPage() {
 
         {/* Hata */}
         {error && (
-          <div className="mt-8 bg-red-50 border border-red-200 rounded-xl p-6">
+          <div role="alert" className="mt-8 bg-red-50 border border-red-200 rounded-xl p-6">
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
               <div>
@@ -97,6 +104,7 @@ export default function RotaMaliyetPage() {
         )}
 
         {/* Sonuçlar */}
+        <div aria-live="polite" aria-atomic="false">
         {result && (
           <div
             ref={resultRef}
@@ -125,6 +133,7 @@ export default function RotaMaliyetPage() {
             <RouteConfidenceNote result={result} />
           </div>
         )}
+        </div>
 
         {/* Alt bilgilendirme */}
         <div className="mt-8 text-center text-xs text-gray-500 py-4 border-t border-gray-200">

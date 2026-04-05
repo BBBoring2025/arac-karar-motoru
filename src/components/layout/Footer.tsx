@@ -28,7 +28,7 @@ const Footer: React.FC = () => {
           </div>
 
           {/* Quick Links */}
-          <div>
+          <nav aria-label="Alt sayfa bağlantıları">
             <h4 className="text-base font-semibold mb-4">Hızlı Bağlantılar</h4>
             <ul className="space-y-2">
               {footerLinks.map((link) => (
@@ -42,7 +42,7 @@ const Footer: React.FC = () => {
                 </li>
               ))}
             </ul>
-          </div>
+          </nav>
 
           {/* Contact Info */}
           <div>

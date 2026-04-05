@@ -123,7 +123,7 @@ export default function RouteForm({ onCalculate, isCalculating }: RouteFormProps
         </div>
 
         {startDistrictId && endDistrictId && startDistrictId === endDistrictId && (
-          <p className="mt-2 text-sm text-red-500">
+          <p role="alert" className="mt-2 text-sm text-red-500">
             Başlangıç ve varış aynı ilçe olamaz.
           </p>
         )}
@@ -141,10 +141,11 @@ export default function RouteForm({ onCalculate, isCalculating }: RouteFormProps
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label htmlFor="vehicle-class-select" className="block text-sm font-medium text-slate-700 mb-1">
               Araç Sınıfı
             </label>
             <select
+              id="vehicle-class-select"
               value={vehicleClass}
               onChange={(e) => setVehicleClass(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -185,6 +186,8 @@ export default function RouteForm({ onCalculate, isCalculating }: RouteFormProps
       <button
         type="submit"
         disabled={!isValid || isCalculating}
+        aria-disabled={!isValid || isCalculating}
+        aria-busy={isCalculating}
         className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-colors text-lg flex items-center justify-center gap-2"
       >
         {isCalculating ? (

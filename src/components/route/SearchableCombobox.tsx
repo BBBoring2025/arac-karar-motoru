@@ -6,7 +6,7 @@
  * Klavye navigasyonu + erişilebilirlik destekli.
  */
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, useId } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 export interface ComboboxOption {
@@ -46,6 +46,11 @@ export default function SearchableCombobox({
   label,
   disabled = false,
 }: SearchableComboboxProps) {
+  const reactId = useId();
+  const inputId = `combobox-input-${reactId}`;
+  const listboxId = `combobox-listbox-${reactId}`;
+  const optionIdPrefix = `combobox-option-${reactId}`;
+
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -164,7 +169,7 @@ export default function SearchableCombobox({
   return (
     <div ref={containerRef} className="relative">
       {label && (
-        <label className="block text-sm font-medium text-slate-700 mb-1">
+        <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 mb-1">
           {label}
         </label>
       )}
@@ -172,11 +177,14 @@ export default function SearchableCombobox({
       <div className="relative">
         <input
           ref={inputRef}
+          id={inputId}
           role="combobox"
           aria-expanded={isOpen}
-          aria-controls="combobox-listbox"
+          aria-controls={listboxId}
           aria-haspopup="listbox"
           aria-autocomplete="list"
+          aria-activedescendant={activeIndex >= 0 ? `${optionIdPrefix}-${activeIndex}` : undefined}
+          aria-label={!label ? placeholder : undefined}
           type="text"
           value={query}
           onChange={handleInputChange}
@@ -198,7 +206,9 @@ export default function SearchableCombobox({
       {isOpen && !disabled && (
         <ul
           ref={listRef}
+          id={listboxId}
           role="listbox"
+          aria-label={label || placeholder}
           className="absolute z-50 mt-1 w-full max-h-52 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg"
         >
           {filtered.length === 0 ? (
@@ -209,6 +219,7 @@ export default function SearchableCombobox({
             filtered.map((opt, idx) => (
               <li
                 key={opt.value}
+                id={`${optionIdPrefix}-${idx}`}
                 role="option"
                 aria-selected={idx === activeIndex}
                 onMouseDown={(e) => {
