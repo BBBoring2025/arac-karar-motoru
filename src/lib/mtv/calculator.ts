@@ -1,10 +1,23 @@
 /**
- * MTV (Motorlu Tasit Vergisi) Hesaplama Modulu
- * Resmi GIB 2026 tarife tablosundan hesaplama yapar
+ * MTV (Motorlu Taşıt Vergisi) Hesaplama Modülü
+ *
+ * GİB tarife tablosu yapısını kullanır.
+ *
+ * ÖNEMLİ — CONFIDENCE POLITIKASI:
+ * - Elektrikli araç → "kesin" (her zaman 0 TL, 2026 muafiyeti)
+ * - Diğer yakıt tipleri → "yaklaşık"
+ *
+ * Sebep: Koddaki MTV tarife tablosu 2026 başında oluşturulmuş bir snapshot.
+ * GİB tarifeleri yıl içinde güncellenebilir, kesin tutar için her zaman
+ * GİB'in resmi MTV Hesaplama aracı kullanılmalıdır:
+ * https://dijital.gib.gov.tr/hesaplamalar/MTVHesaplama
  */
 
 import { MTVInput, MTVResult } from "./types";
 import { mtvData, MTVBracket } from "@/data/mtv";
+
+const GIB_DOGRULAMA_UYARISI =
+  "Kesin tutar için GİB MTV Hesaplama aracını kullanın: https://dijital.gib.gov.tr/hesaplamalar/MTVHesaplama";
 
 // ---- Yardimci fonksiyonlar (private) ----
 
@@ -53,7 +66,7 @@ export function calculateMTVDetailed(input: MTVInput): MTVResult {
     };
   }
 
-  // Hibrit araclar: ayri tarife (%50 indirimli benzin tarifesi)
+  // Hibrit araçlar: ayrı tarife (%50 indirimli benzin tarifesi)
   if (input.yakitTupu === "hibrit") {
     const bracket = findMtvBracket(mtvData.hybrid, input.motorHacmi);
     if (bracket) {
@@ -61,16 +74,17 @@ export function calculateMTVDetailed(input: MTVInput): MTVResult {
       return {
         yillikTutar: tutar,
         aylikTutar: tutar / 12,
-        tabloAdi: "Hibrit Araclar Tarifesi",
+        tabloAdi: "Hibrit Araçlar Tarifesi",
         yasGrubu: ageGroup,
         motorHacmiBandi: bracket.displayName,
-        confidence: "kesin",
+        confidence: "yaklaşık",
         kaynak: mtvData.sourceLabel,
         sourceUrl: mtvData.sourceUrl || 'https://www.gib.gov.tr',
         effectiveDate: mtvData.effectiveDate || '2026-01-01',
+        uyari: GIB_DOGRULAMA_UYARISI,
       };
     }
-    // Hibrit tarife tablosunda bulunamazsa benzin tarifesinin yarisi
+    // Hibrit tarife tablosunda bulunamazsa benzin tarifesinin yarısı
     const gasBracket = findMtvBracket(mtvData.gasoline, input.motorHacmi);
     const tutar = gasBracket
       ? (gasBracket.ageGroups[ageGroup] || 0) / 2
@@ -78,13 +92,14 @@ export function calculateMTVDetailed(input: MTVInput): MTVResult {
     return {
       yillikTutar: tutar,
       aylikTutar: tutar / 12,
-      tabloAdi: "Hibrit Araclar Tarifesi (Benzin %50)",
+      tabloAdi: "Hibrit Araçlar Tarifesi (Benzin %50)",
       yasGrubu: ageGroup,
       motorHacmiBandi: gasBracket?.displayName || "Bilinmiyor",
-      confidence: "kesin",
+      confidence: "yaklaşık",
       kaynak: mtvData.sourceLabel,
       sourceUrl: mtvData.sourceUrl || 'https://www.gib.gov.tr',
       effectiveDate: mtvData.effectiveDate || '2026-01-01',
+      uyari: GIB_DOGRULAMA_UYARISI,
     };
   }
 
@@ -108,7 +123,7 @@ export function calculateMTVDetailed(input: MTVInput): MTVResult {
 
   const bracket = findMtvBracket(brackets, input.motorHacmi);
   if (!bracket) {
-    // Edge case: motor hacmi hicbir bracket'a uymuyorsa son bracket
+    // Edge case: motor hacmi hiçbir bracket'a uymuyorsa son bracket
     const lastBracket = brackets[brackets.length - 1];
     const tutar = lastBracket?.ageGroups[ageGroup] || 0;
     return {
@@ -117,10 +132,11 @@ export function calculateMTVDetailed(input: MTVInput): MTVResult {
       tabloAdi,
       yasGrubu: ageGroup,
       motorHacmiBandi: lastBracket?.displayName || "Bilinmiyor",
-      confidence: "kesin",
+      confidence: "yaklaşık",
       kaynak: mtvData.sourceLabel,
       sourceUrl: mtvData.sourceUrl || 'https://www.gib.gov.tr',
       effectiveDate: mtvData.effectiveDate || '2026-01-01',
+      uyari: GIB_DOGRULAMA_UYARISI,
     };
   }
 
@@ -131,10 +147,11 @@ export function calculateMTVDetailed(input: MTVInput): MTVResult {
     tabloAdi,
     yasGrubu: ageGroup,
     motorHacmiBandi: bracket.displayName,
-    confidence: "kesin",
+    confidence: "yaklaşık",
     kaynak: mtvData.sourceLabel,
     sourceUrl: mtvData.sourceUrl || 'https://www.gib.gov.tr',
     effectiveDate: mtvData.effectiveDate || '2026-01-01',
+    uyari: GIB_DOGRULAMA_UYARISI,
   };
 }
 

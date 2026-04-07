@@ -1,7 +1,21 @@
 /**
  * TÜVTÜRK Muayene Ücretleri 2026
- * Kaynak: TÜVTÜRK (Türkiye Araştırmaları ve Kalite Kontrol Enstitüsü)
- * Muayene ve Emisyon Ölçüm Ücretleri
+ * Kaynak: TÜVTÜRK 2026 Resmi Fiyat Tarifesi
+ *         (27 Kasım 2025 tarihli Resmi Gazete — %25.49 yeniden değerleme oranı)
+ *
+ * 2026 TARIFE YAPISI:
+ * - 3 araç kategorisi: Hafif (otomobil/minibüs/kamyonet), Ağır (otobüs/kamyon),
+ *   Motosiklet/Traktör
+ * - Periyodik muayene tek fiyat (yaş ayrımı yok)
+ * - 0-3 yaş yeni araçlar muayeneden muaf
+ * - Tekrar muayene yaklaşık yarı fiyat
+ * - Egzoz emisyon ölçümü tüm araçlar için sabit (elektrikli hariç)
+ *
+ * Doğrulanmış kaynaklar:
+ * - https://www.sozcu.com.tr/tuvturk-2026-muayene-ucretleri-belli-oldu-...
+ * - https://bigpara.hurriyet.com.tr/ekonomi-haberleri/galeri-arac-muayene-ucreti-2026-...
+ * - https://www.tuvturk.com.tr/arac-muayene-fiyat-listesi.aspx
+ * - https://www.iscihaber.net/otomobil/arac-muayene-ucretlerine-yuzde-2549-zam-...
  */
 
 export interface InspectionFee {
@@ -44,31 +58,31 @@ export const inspectionData: InspectionData = {
       id: 'otomobil',
       vehicleType: 'Otomobil',
       displayName: 'Otomobil (Sedan, Hatchback, SUV)',
-      description: 'Yolcu taşıması için imal edilen araçlar',
+      description: 'Yolcu taşıması için imal edilen araçlar — TÜVTÜRK kategorisi: Otomobil/Minibüs/Kamyonet/SUV (3.288 TL)',
       fees: [
         {
           inspectionType: 'İlk Muayene (Yeni Araç)',
-          amount: 175.00,
+          amount: 3288.00,
         },
         {
           inspectionType: 'Periyodik Muayene (1-3 yaş)',
-          amount: 125.00,
+          amount: 3288.00,
         },
         {
           inspectionType: 'Periyodik Muayene (4+ yaş)',
-          amount: 150.00,
+          amount: 3288.00,
         },
         {
           inspectionType: 'Muayeneden Kalma (Tekrar Muayene)',
-          amount: 100.00,
+          amount: 1644.00,
         },
         {
           inspectionType: 'Egzoz Emisyon Ölçüm (Benzin)',
-          amount: 50.00,
+          amount: 460.00,
         },
         {
           inspectionType: 'Egzoz Emisyon Ölçüm (Dizel)',
-          amount: 60.00,
+          amount: 460.00,
         },
       ],
     },
@@ -76,23 +90,23 @@ export const inspectionData: InspectionData = {
       id: 'minibus',
       vehicleType: 'Minibüs',
       displayName: 'Minibüs (7-8 Kişi)',
-      description: 'Sınırlı sayıda yolcu taşıması için imal edilen araçlar',
+      description: 'Hafif yolcu araçları — TÜVTÜRK aynı kategoride (3.288 TL)',
       fees: [
         {
           inspectionType: 'İlk Muayene (Yeni Araç)',
-          amount: 220.00,
+          amount: 3288.00,
         },
         {
           inspectionType: 'Periyodik Muayene (1-3 yaş)',
-          amount: 160.00,
+          amount: 3288.00,
         },
         {
           inspectionType: 'Periyodik Muayene (4+ yaş)',
-          amount: 190.00,
+          amount: 3288.00,
         },
         {
           inspectionType: 'Muayeneden Kalma (Tekrar Muayene)',
-          amount: 120.00,
+          amount: 1644.00,
         },
       ],
     },
@@ -100,23 +114,23 @@ export const inspectionData: InspectionData = {
       id: 'otobüs',
       vehicleType: 'Otobüs',
       displayName: 'Otobüs (>9 Kişi)',
-      description: 'Çok sayıda yolcu taşıması için imal edilen araçlar',
+      description: 'Ağır vasıta — TÜVTÜRK kategorisi: Otobüs/Kamyon/Çekici/Tanker (4.446 TL)',
       fees: [
         {
           inspectionType: 'İlk Muayene (Yeni Araç)',
-          amount: 300.00,
+          amount: 4446.00,
         },
         {
           inspectionType: 'Periyodik Muayene (1-3 yaş)',
-          amount: 200.00,
+          amount: 4446.00,
         },
         {
           inspectionType: 'Periyodik Muayene (4+ yaş)',
-          amount: 240.00,
+          amount: 4446.00,
         },
         {
           inspectionType: 'Muayeneden Kalma (Tekrar Muayene)',
-          amount: 150.00,
+          amount: 2223.00,
         },
       ],
     },
@@ -124,31 +138,31 @@ export const inspectionData: InspectionData = {
       id: 'kamyonet',
       vehicleType: 'Kamyonet',
       displayName: 'Kamyonet (Açık Platform)',
-      description: 'Eşya ve yük taşıması için imal edilen hafif araçlar',
+      description: 'Hafif ticari araç — TÜVTÜRK aynı kategoride (3.288 TL)',
       fees: [
         {
           inspectionType: 'İlk Muayene (Yeni Araç)',
-          amount: 200.00,
+          amount: 3288.00,
         },
         {
           inspectionType: 'Periyodik Muayene (1-3 yaş)',
-          amount: 150.00,
+          amount: 3288.00,
         },
         {
           inspectionType: 'Periyodik Muayene (4+ yaş)',
-          amount: 175.00,
+          amount: 3288.00,
         },
         {
           inspectionType: 'Muayeneden Kalma (Tekrar Muayene)',
-          amount: 110.00,
+          amount: 1644.00,
         },
         {
           inspectionType: 'Egzoz Emisyon Ölçüm (Benzin)',
-          amount: 50.00,
+          amount: 460.00,
         },
         {
           inspectionType: 'Egzoz Emisyon Ölçüm (Dizel)',
-          amount: 60.00,
+          amount: 460.00,
         },
       ],
     },
@@ -156,27 +170,27 @@ export const inspectionData: InspectionData = {
       id: 'kamyon',
       vehicleType: 'Kamyon',
       displayName: 'Kamyon (Kapalı Platform)',
-      description: 'Eşya ve yük taşıması için imal edilen ağır araçlar',
+      description: 'Ağır vasıta — TÜVTÜRK kategorisi: Otobüs/Kamyon/Çekici/Tanker (4.446 TL)',
       fees: [
         {
           inspectionType: 'İlk Muayene (Yeni Araç)',
-          amount: 350.00,
+          amount: 4446.00,
         },
         {
           inspectionType: 'Periyodik Muayene (1-3 yaş)',
-          amount: 220.00,
+          amount: 4446.00,
         },
         {
           inspectionType: 'Periyodik Muayene (4+ yaş)',
-          amount: 260.00,
+          amount: 4446.00,
         },
         {
           inspectionType: 'Muayeneden Kalma (Tekrar Muayene)',
-          amount: 160.00,
+          amount: 2223.00,
         },
         {
           inspectionType: 'Egzoz Emisyon Ölçüm (Dizel)',
-          amount: 70.00,
+          amount: 460.00,
         },
       ],
     },
@@ -184,27 +198,27 @@ export const inspectionData: InspectionData = {
       id: 'tirlar',
       vehicleType: 'Tırlar',
       displayName: 'Tırlar (Çekici + Dorse)',
-      description: 'Yol çekicilik veya tren şeklinde taşıt oluşturmak için tasarlanan araçlar',
+      description: 'Ağır vasıta — TÜVTÜRK kategorisi: Çekici/Tanker (4.446 TL)',
       fees: [
         {
           inspectionType: 'İlk Muayene (Yeni Araç)',
-          amount: 400.00,
+          amount: 4446.00,
         },
         {
           inspectionType: 'Periyodik Muayene (1-3 yaş)',
-          amount: 250.00,
+          amount: 4446.00,
         },
         {
           inspectionType: 'Periyodik Muayene (4+ yaş)',
-          amount: 300.00,
+          amount: 4446.00,
         },
         {
           inspectionType: 'Muayeneden Kalma (Tekrar Muayene)',
-          amount: 180.00,
+          amount: 2223.00,
         },
         {
           inspectionType: 'Egzoz Emisyon Ölçüm (Dizel)',
-          amount: 80.00,
+          amount: 460.00,
         },
       ],
     },
@@ -212,23 +226,23 @@ export const inspectionData: InspectionData = {
       id: 'motosiklet',
       vehicleType: 'Motosiklet',
       displayName: 'Motosiklet / Scooter',
-      description: 'İki tekerlekli motorlu araçlar',
+      description: 'İki tekerlekli motorlu araç — TÜVTÜRK kategorisi: Motosiklet/Traktör (1.674 TL)',
       fees: [
         {
           inspectionType: 'İlk Muayene (Yeni Araç)',
-          amount: 75.00,
+          amount: 1674.00,
         },
         {
           inspectionType: 'Periyodik Muayene (1-3 yaş)',
-          amount: 60.00,
+          amount: 1674.00,
         },
         {
           inspectionType: 'Periyodik Muayene (4+ yaş)',
-          amount: 75.00,
+          amount: 1674.00,
         },
         {
           inspectionType: 'Muayeneden Kalma (Tekrar Muayene)',
-          amount: 45.00,
+          amount: 837.00,
         },
       ],
     },
@@ -236,33 +250,29 @@ export const inspectionData: InspectionData = {
       id: 'elektrik_arac',
       vehicleType: 'Elektrik Araç',
       displayName: 'Elektrik Araç (EV)',
-      description: 'Tamamen elektrik enerjisiyle çalışan araçlar',
+      description: 'Elektrikli araç — Otomobil kategorisinde, egzoz ölçümü yok (3.288 TL)',
       fees: [
         {
           inspectionType: 'İlk Muayene (Yeni Araç)',
-          amount: 150.00,
+          amount: 3288.00,
         },
         {
           inspectionType: 'Periyodik Muayene (1-3 yaş)',
-          amount: 100.00,
+          amount: 3288.00,
         },
         {
           inspectionType: 'Periyodik Muayene (4+ yaş)',
-          amount: 125.00,
+          amount: 3288.00,
         },
         {
           inspectionType: 'Muayeneden Kalma (Tekrar Muayene)',
-          amount: 80.00,
+          amount: 1644.00,
         },
       ],
     },
   ],
   additionalFees: {
-    'Teknik Kontrol Sertifikası (İlk Defa)': 50.00,
-    'Teknik Kontrol Sertifikası (Yenileme)': 30.00,
-    'Araç Kimlik Belgesi Çıkarma': 40.00,
-    'İtfaiye İnceleme Ücreti': 50.00,
-    'Hususi Araç İncelemesi': 150.00,
-    'Araç Tasarım Değişikliği Müdür İncelemesi': 200.00,
+    'Yola Elverişlilik Muayenesi (Otomobil)': 822.00,
+    'Yola Elverişlilik Muayenesi (Ağır Vasıta)': 1111.50,
   },
 };

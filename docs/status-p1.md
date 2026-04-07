@@ -1,17 +1,19 @@
 # P1 Sprint Status — Gerçek Altyapı ve Ödeme
 
 **Tarih**: Nisan 2026
-**Durum**: Tamamlandı
+**Durum**: Kod tamamlandı, deployment env vars bekliyor (production'da henüz aktif değil)
 
 ## Yapılanlar
 
-### 1. iyzico Sandbox Entegrasyonu
+### 1. iyzico Sandbox Entegrasyonu — KOD HAZIR
 - `iyzipay` npm paketi kuruldu (v2.0.67)
-- `src/lib/payment/processor.ts` — gerçek iyzico Checkout Form API
+- `src/lib/payment/processor.ts` — iyzico Checkout Form API
 - PCI DSS uyumlu: kart bilgisi sunucuya gelmez
 - `initializeCheckoutForm()` — checkout form token oluştur
 - `retrieveCheckoutForm()` — ödeme sonucu sorgula
 - `serverExternalPackages: ['iyzipay']` — Turbopack uyumluluğu
+
+**⚠️ Production durumu**: Vercel environment variables'a `IYZICO_API_KEY` ve `IYZICO_SECRET_KEY` eklenmediği için canlı `/odeme` sayfası "Ödeme Sistemi Hazırlanıyor" göstermeye devam ediyor. Anahtarlar Vercel dashboard'a eklendiği an kod otomatik olarak gerçek sandbox akışına geçer.
 
 ### 2. Payment API Routes
 - `POST /api/payment/create` — ödeme başlat, DB'ye kaydet, iyzico form döndür
@@ -50,6 +52,16 @@
 
 ## Kalan
 
+- **Vercel env vars eklenmesi**: Sandbox anahtarları local'de var, Vercel dashboard'da yok
 - iyzico production'a geçiş (sandbox → production URL değişikliği)
 - Premium rapor PDF üretimi (ödeme sonrası)
 - GA4/Plausible script'inin layout'a eklenmesi (hesap açılınca)
+
+## Production vs Local Parity Notu
+
+| Ortam | iyzico Env | /odeme Sayfası | Sandbox Çalışır mı? |
+|-------|-----------|---------------|---------------------|
+| Local (.env.local) | ✅ Var | Gerçek checkout flow | ✅ Evet |
+| Vercel Production | ❌ Yok | "Hazırlanıyor" banner | ❌ Hayır |
+
+**Kod davranışı doğru**: `isPaymentEnabled()` env yokluğunu algılayıp güvenli "coming soon" gösteriyor.

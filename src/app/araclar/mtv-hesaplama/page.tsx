@@ -112,7 +112,7 @@ export default function MTVHesaplama() {
               <Zap className="w-5 h-5 text-orange-500" />
               <h2 className="text-xl font-bold text-slate-900">Yıllık MTV Tutarı</h2>
             </div>
-            <ConfidenceBadge level="kesin" />
+            <ConfidenceBadge level={selectedFuel === 'Elektrik' ? 'kesin' : 'yaklaşık'} />
           </div>
           <div className="text-5xl font-bold text-slate-900 mb-2">
             {calculateMTV.amount.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
@@ -120,6 +120,23 @@ export default function MTVHesaplama() {
           <p className="text-slate-600">
             {selectedEngine} • {selectedFuel} • {currentYear - parseInt(selectedYear)} yaşında
           </p>
+          {selectedFuel !== 'Elektrik' && (
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-xs text-amber-900">
+                <strong>⚠️ Yaklaşık değer:</strong> Bu tutar GİB tarife yapısına göre hesaplanmıştır.
+                Yıl içi güncellemeler ve özel durumlar için kesin tutarı{' '}
+                <a
+                  href="https://dijital.gib.gov.tr/hesaplamalar/MTVHesaplama"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline font-medium"
+                >
+                  GİB MTV Hesaplama aracından
+                </a>{' '}
+                doğrulayın.
+              </p>
+            </div>
+          )}
         </Card>
 
         <Card className="mb-8">
@@ -152,10 +169,25 @@ export default function MTVHesaplama() {
             <div>
               <h3 className="font-semibold text-blue-900 mb-2">Bilgilendirme</h3>
               <p className="text-sm text-blue-900 mb-2">
-                <strong>Kaynak:</strong> GİB 2026 MTV Tebliği
+                <strong>Kaynak:</strong> GİB MTV tarife yapısı (2026 başlangıç snapshot)
+              </p>
+              <p className="text-sm text-blue-900 mb-2">
+                MTV (Motorlu Taşıtlar Vergisi), her yıl ödenmesi gereken bir vergidir.
+                Motor hacmi, yakıt tipi ve aracın yaşı tutarı belirler.
+                Elektrikli araçlar 2026 itibarıyla MTV&apos;den muaftır.
               </p>
               <p className="text-sm text-blue-900">
-                MTV (Motorlu Taşıtlar Vergisi), her yıl ödenmesi gereken bir vergisidir. Araç fiyatı, motor hacmi ve yaşı verginin miktarını belirler. Elektrik araçlar vergi muafiyetinden yararlanmaktadır.
+                <strong>Önemli:</strong> Bu hesap aracı tarife yapısını uygular ancak
+                tarifeler yıl içinde güncellenebilir. Ödeme yapmadan önce her zaman{' '}
+                <a
+                  href="https://dijital.gib.gov.tr/hesaplamalar/MTVHesaplama"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline font-medium"
+                >
+                  GİB&apos;in resmi MTV Hesaplama aracını
+                </a>{' '}
+                kullanarak doğrulayın.
               </p>
             </div>
           </div>

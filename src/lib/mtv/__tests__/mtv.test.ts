@@ -1,8 +1,17 @@
 /**
- * MTV Golden Testleri — GİB 2026 Tarife Tablosundan Bilinen Değerler
+ * MTV Testleri — Tarife Tablosu Snapshot Doğrulaması
  *
- * Bu testler resmi GİB tarife tablosundaki sabit değerlerle doğrulama yapar.
- * Hiçbir "yaklaşık" beklenti yok — her biri kesin tarife değeridir.
+ * Bu testler kod içindeki MTV tarife snapshot'ının (src/data/mtv.ts) tutarlı
+ * çalıştığını doğrular. Confidence politikası:
+ *
+ * - Elektrikli araç → 'kesin' (her zaman 0 TL, 2026 muafiyeti)
+ * - Diğer yakıt tipleri → 'yaklaşık' (snapshot olduğu için)
+ *
+ * Snapshot değerleri GİB tarife yapısını yansıtır ancak yıl içinde
+ * güncellenebilir. Kesin tutar için GİB MTV Hesaplama aracı kullanılmalıdır.
+ *
+ * Testler bu snapshot'ın iç tutarlılığını doğrular — gerçek GİB değerleriyle
+ * birebir aynı olduğunu DEĞİL, ancak doğru bracket/yaş grubu seçildiğini.
  *
  * Çalıştırmak için: npx tsx src/lib/mtv/__tests__/mtv.test.ts
  */
@@ -61,28 +70,52 @@ console.log('\nGolden Test 4: Hibrit araç');
   assert(result < benzinResult, `Hibrit (${result}) < Benzin (${benzinResult})`);
 }
 
-// ─── GOLDEN TEST: Detaylı sonuç ─────────────────────────────────────────────
-console.log('\nGolden Test 5: Detaylı MTV sonucu (metadata kontrolü)');
+// ─── GOLDEN TEST: Detaylı sonuç + confidence politikası ────────────────────
+console.log('\nGolden Test 5: Detaylı MTV sonucu (benzin → yaklaşık)');
 {
   const detail = calculateMTVDetailed({ motorHacmi: 1200, aracYasi: 2, yakitTupu: 'benzin' });
-  assertEqual(detail.yillikTutar, 3950, 'Yıllık tutar');
+  assertEqual(detail.yillikTutar, 3950, 'Yıllık tutar (snapshot)');
   assert(detail.aylikTutar > 0, `Aylık tutar: ${detail.aylikTutar} TL`);
-  assert(detail.confidence === 'kesin', `Güven seviyesi: ${detail.confidence}`);
+  // YENİ: Benzinli araçta confidence "yaklaşık" olmalı (snapshot)
+  assert(
+    detail.confidence === 'yaklaşık',
+    `Benzinli confidence: ${detail.confidence} (beklenen: yaklaşık)`
+  );
   assert(detail.yasGrubu === '1-3', `Yaş grubu: ${detail.yasGrubu}`);
   assert(detail.tabloAdi.length > 0, `Tablo adı: ${detail.tabloAdi}`);
   assert(detail.kaynak.includes('GİB'), `Kaynak: ${detail.kaynak}`);
-  assert(typeof detail.sourceUrl === 'string' && detail.sourceUrl.length > 0, `sourceUrl dolu: ${detail.sourceUrl}`);
-  assert(typeof detail.effectiveDate === 'string' && detail.effectiveDate.length > 0, `effectiveDate dolu: ${detail.effectiveDate}`);
+  assert(typeof detail.sourceUrl === 'string' && detail.sourceUrl.length > 0, `sourceUrl dolu`);
+  assert(typeof detail.effectiveDate === 'string' && detail.effectiveDate.length > 0, `effectiveDate dolu`);
+  // YENİ: Uyarı mevcut olmalı
+  assert(
+    typeof detail.uyari === 'string' && detail.uyari.includes('GİB'),
+    `Uyarı mevcut: ${detail.uyari?.substring(0, 50)}...`
+  );
 }
 
-// ─── GOLDEN TEST: Elektrikli araç metadata ──────────────────────────────────
-console.log('\nGolden Test 5b: Elektrikli araç metadata');
+// ─── GOLDEN TEST: Elektrikli araç (KESIN olmalı) ────────────────────────────
+console.log('\nGolden Test 5b: Elektrikli araç — confidence kesin (her zaman 0)');
 {
   const detail = calculateMTVDetailed({ motorHacmi: 0, aracYasi: 3, yakitTupu: 'elektrik' });
   assertEqual(detail.yillikTutar, 0, 'Elektrikli yıllık tutar = 0');
+  // Elektrikli araçta confidence "kesin" — çünkü her zaman 0 TL
   assert(detail.confidence === 'kesin', `Elektrikli confidence: ${detail.confidence}`);
   assert(typeof detail.sourceUrl === 'string', 'Elektrikli sourceUrl mevcut');
   assert(typeof detail.effectiveDate === 'string', 'Elektrikli effectiveDate mevcut');
+  // Elektrikli araçta uyarı YOK
+  assert(detail.uyari === undefined, 'Elektrikli araçta uyarı yok (kesin tutar)');
+}
+
+// ─── GOLDEN TEST: Hibrit confidence ─────────────────────────────────────────
+console.log('\nGolden Test 5c: Hibrit araç confidence (yaklaşık)');
+{
+  const detail = calculateMTVDetailed({ motorHacmi: 1800, aracYasi: 2, yakitTupu: 'hibrit' });
+  assert(detail.yillikTutar > 0, `Hibrit tutar > 0: ${detail.yillikTutar}`);
+  assert(
+    detail.confidence === 'yaklaşık',
+    `Hibrit confidence: ${detail.confidence} (beklenen: yaklaşık)`
+  );
+  assert(typeof detail.uyari === 'string', `Hibrit uyarı mevcut`);
 }
 
 // ─── GOLDEN TEST: Validasyon ─────────────────────────────────────────────────

@@ -66,11 +66,24 @@ export default function MetodolojPage() {
       lastUpdate: 'Aylık Güncelleme',
     },
     {
-      component: 'Rota Hesaplama',
-      source: 'KGM Tarifeleri + İl/İlçe Koridor Grafı',
+      component: 'Rota — Köprü/Tünel Ücretleri',
+      source: 'KGM 2026 Resmi Tarifesi',
       reliability: 'Kesin',
       lastUpdate: 'Nisan 2026',
       url: 'https://www.kgm.gov.tr',
+    },
+    {
+      component: 'Rota — Otoyol Segment Ücretleri',
+      source: 'KGM tarife yapısı (segment tahmini)',
+      reliability: 'Tahmini',
+      lastUpdate: 'Nisan 2026',
+      url: 'https://www.kgm.gov.tr',
+    },
+    {
+      component: 'Rota — İl/İlçe Mesafeleri',
+      source: 'Karayolu koridor grafı + Haversine offset',
+      reliability: 'Yaklaşık',
+      lastUpdate: 'Nisan 2026',
     },
   ];
 

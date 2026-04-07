@@ -14,21 +14,28 @@ function calculateInspectionCostForType(
   aracYasi: number,
   yakitTupu: string
 ): number {
-  // Periyodik muayene ucreti (yasa gore)
+  // Periyodik muayene ücreti (yaşa göre) — DİKKAT: Türkçe karakterler data ile birebir eşleşmeli
   const inspectionType =
     aracYasi <= 3
-      ? "Periyodik Muayene (1-3 yas)"
-      : "Periyodik Muayene (4+ yas)";
+      ? "Periyodik Muayene (1-3 yaş)"
+      : "Periyodik Muayene (4+ yaş)";
 
   const fee = vehicleType.fees.find((f) => f.inspectionType === inspectionType);
-  let total = fee?.amount || 150;
+  if (!fee) {
+    // Veri dosyası ile string mismatch — geliştirici hatası, sessiz fallback uydurma
+    console.warn(
+      `[Muayene] '${inspectionType}' bulunamadı. Veri dosyası kontrol edilmeli.`
+    );
+    return 0;
+  }
+  let total = fee.amount;
 
-  // Egzoz emisyon olcum ucreti (elektrikli araclar haric)
+  // Egzoz emisyon ölçüm ücreti (elektrikli araçlar hariç)
   if (yakitTupu !== "elektrik") {
     const emissionType =
       yakitTupu === "dizel"
-        ? "Egzoz Emisyon Olcum (Dizel)"
-        : "Egzoz Emisyon Olcum (Benzin)";
+        ? "Egzoz Emisyon Ölçüm (Dizel)"
+        : "Egzoz Emisyon Ölçüm (Benzin)";
     const emissionFee = vehicleType.fees.find(
       (f) => f.inspectionType === emissionType
     );
@@ -88,13 +95,13 @@ export function calculateMuayeneDetailed(input: MuayeneInput): MuayeneResult {
 
   let tekMuayeneUcreti: number;
   if (!vehicleType) {
-    // Fallback: otomobil
+    // Fallback: otomobil — uydurma değer YOK, gerçek tarifeden alır
     const defaultType = inspectionData.vehicleTypes.find(
       (v) => v.id === "otomobil"
     );
     tekMuayeneUcreti = defaultType
       ? calculateInspectionCostForType(defaultType, input.aracYasi, input.yakitTupu)
-      : 150;
+      : 0;
   } else {
     tekMuayeneUcreti = calculateInspectionCostForType(
       vehicleType,
@@ -148,11 +155,11 @@ export function calculateMuayeneMaliyeti(
     (v) => v.id === vehicleTypeId
   );
   if (!vehicleType) {
-    // Fallback: otomobil
+    // Fallback: otomobil — uydurma değer YOK
     const defaultType = inspectionData.vehicleTypes.find(
       (v) => v.id === "otomobil"
     );
-    if (!defaultType) return 150;
+    if (!defaultType) return 0;
     return calculateInspectionCostForType(defaultType, aracYasi, yakitTupu);
   }
 

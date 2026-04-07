@@ -164,7 +164,14 @@ export function calculateRoute(params: RouteParams): RouteResult {
 }
 
 /**
- * Edge'lerin güven seviyelerinden genel güven seviyesini belirler
+ * Edge'lerin güven seviyelerinden genel rota güven seviyesini belirler
+ *
+ * ÖNEMLİ: Hiçbir rota "tam kesin" döndürmez çünkü:
+ * - İlçe → anchor offset her zaman Haversine + bölgesel çarpan tahmini
+ * - Otoyol segment ücretleri tahmini
+ *
+ * Bu yüzden en iyi senaryo "yüksek" (tüm edge kesin = sadece köprü/tünel rotası).
+ * Çoğu rota karma olduğu için "tahmini" döner.
  */
 function determineConfidence(edges: RouteEdge[]): ConfidenceLevel {
   if (edges.length === 0) return 'tahmini';
@@ -173,7 +180,9 @@ function determineConfidence(edges: RouteEdge[]): ConfidenceLevel {
   const hasEstimate = levels.includes('tahmini');
   const allExact = levels.every((l) => l === 'kesin');
 
-  if (allExact) return 'kesin';
+  // Tüm edge'ler kesin olsa bile district offset tahmini içerir
+  // → en iyi senaryo "yüksek"
+  if (allExact) return 'yüksek';
   if (hasEstimate) return 'tahmini';
   return 'yüksek';
 }
