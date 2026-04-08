@@ -1,0 +1,68 @@
+=== Sprint C — Final Production Snapshots (POST-DEPLOY) ===
+Date: 2026-04-08T18:11:05Z
+Production deployment: dpl_E9YTfCv4X18i7UsWZb79CpBoBkaR
+Production commit: 95bcadc
+
+--- /api/health ---
+{
+    "status": "ok",
+    "timestamp": "2026-04-08T18:10:43.708Z",
+    "paymentMode": "paymentSandbox",
+    "flags": {
+        "paymentEnabled": {
+            "enabled": true,
+            "reason": "ok"
+        },
+        "adminWriteEnabled": {
+            "enabled": true,
+            "reason": "ok"
+        },
+        "analyticsEnabled": {
+            "enabled": false,
+            "reason": "unknown"
+        },
+        "routeV3Enabled": {
+            "enabled": true,
+            "reason": "ok"
+        },
+        "pdfEnabled": {
+            "enabled": true,
+            "reason": "ok"
+        }
+
+--- /api/build-info ---
+{
+    "commit": "95bcadc8e6770372e483948b74e5446d3aac56c6",
+    "commitShort": "95bcadc",
+    "commitMessage": "fix(sprint-c): outputFileTracingIncludes \u2014 full iyzipay transitive dep tree (71 packages)",
+    "branch": "main",
+    "env": "production",
+    "builtAt": "2026-04-08T18:10:44.209Z",
+    "nextVersion": "16.2.2",
+    "nodeVersion": "24.13.0",
+    "deploymentId": "dpl_E9YTfCv4X18i7UsWZb79CpBoBkaR",
+    "region": "iad1"
+}
+
+--- /api/data-status (truncated) ---
+activeSource: src_data_static_files
+adrReference: docs/adr/0001-src-data-as-source-of-truth.md
+precedence: ["src/data/*.ts (binding)","(supabase tarife tables ignored — see ADR-001)"]
+manifest entries: 8
+alignmentWarning preview: ADR-001 (accepted Sprint C, 2026-04-08): src/data/*.ts is the binding source of truth for all tariff...
+
+--- /api/payment/create (sandbox token sample) ---
+orderId: 16
+token: d65483a8-8d70-44dc-8701-21281232e564
+checkoutFormContent length: 2885
+isSandbox: true
+
+--- Secret leak check ---
+prod-health-final.json: 0
+0 leak hits
+prod-build-info-final.json: 0
+0 leak hits
+prod-data-status-final.json: 0
+0 leak hits
+payment-create-prod.json: 0
+0 leak hits

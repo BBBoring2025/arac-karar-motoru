@@ -2,56 +2,155 @@
 
 **Date**: 2026-04-08
 **Sprint**: C
-**Goal**: Verify the iyzico sandbox flow works end-to-end after Sprint C P3
-fixed Sprint B's `MISSING_CALLBACK_BASE_URL` caveat.
+**Final production deployment**: `dpl_E9YTfCv4X18i7UsWZb79CpBoBkaR`
+**Final production commit**: `95bcadc8e6770372e483948b74e5446d3aac56c6`
+**Status**: ✅ **Sprint B caveat CLOSED in production**
 
 ---
 
-## Summary Table
+## Summary Table (FINAL)
 
 | Test | Local (`npm run dev` + .env.local) | Production (arac-karar-motoru.vercel.app) |
 |---|---|---|
-| `/api/health.paymentMode` | `paymentSandbox` ✅ | **deferred** — production stuck at Sprint B commit `0be9b8e`, Sprint C `ba97d3e` not yet built (Vercel pipeline issue, see §Limitations) |
-| `/api/health.flags.paymentEnabled.enabled` | `true` ✅ | true (Sprint B state, paymentMode field absent until ba97d3e deploys) |
-| `/api/health.services.iyzico.mode` | `sandbox` ✅ | sandbox (Sprint B state) |
-| `/api/data-status.activeSource` | `src_data_static_files` ✅ | **deferred** — field not present until ba97d3e deploys |
-| `/api/data-status.adrReference` | `docs/adr/0001-src-data-as-source-of-truth.md` ✅ | **deferred** |
-| `/api/data-status.manifest` | 8 entries ✅ | **deferred** |
-| POST `/api/payment/create` HTTP | 200 ✅ | 500 (Sprint B caveat persists until Sprint C deploys) |
-| Returns checkoutFormContent | ✅ (3000+ chars) | ❌ (caveat) |
-| Returns sandbox token | ✅ (`a8faded4-…`) | ❌ |
-| `orderId` in response | ✅ (`9`, persisted to `odemeler.id=9`) | ❌ |
-| `checkoutFormContent.includes('sandbox-static.iyzipay.com')` | `true` ✅ | ❌ |
-| `getCallbackBaseUrl()` precedence | `NEXT_PUBLIC_SITE_URL` → `https://arackararmotoru.com/api/payment/callback` ✅ | TBD after deploy |
-| `/odeme` sandbox banner visible | ✅ (paymentMode=paymentSandbox triggers amber banner) | TBD after deploy |
-| Sandbox card 5528790000000008 → odemeler basarili | TBD (browser flow needed) | TBD |
-| Sandbox card 4111111111111129 → odemeler basarisiz | TBD | TBD |
+| `/api/health.paymentMode` | `paymentSandbox` ✅ | **`paymentSandbox`** ✅ |
+| `/api/health.flags.paymentEnabled.enabled` | `true` ✅ | **`true`** ✅ |
+| `/api/health.services.iyzico.mode` | `sandbox` ✅ | **`sandbox`** ✅ |
+| `/api/data-status.activeSource` | `src_data_static_files` ✅ | **`src_data_static_files`** ✅ |
+| `/api/data-status.adrReference` | `docs/adr/0001-src-data-as-source-of-truth.md` ✅ | **same** ✅ |
+| `/api/data-status.manifest` | 8 entries ✅ | **8 entries** ✅ |
+| POST `/api/payment/create` HTTP | 200 ✅ | **200** ✅ |
+| Returns checkoutFormContent | 2880 chars ✅ | **2885 chars** ✅ |
+| Returns sandbox token | ✅ | ✅ (e.g. `d65483a8-8d70-44dc-8701-21281232e564`) |
+| `orderId` in response | ✅ (local id=9) | ✅ (prod id=16) |
+| `checkoutFormContent.includes('sandbox-static.iyzipay.com')` | `true` ✅ | **`true`** ✅ |
 
 ---
 
-## Local PASS Evidence
+## Sprint B caveat CLOSURE — Timeline
 
-Captured 2026-04-08 from `npm run dev` against `.env.local`:
+Sprint B left a known caveat: `/api/payment/create` returned **HTTP 500
+"Odeme baslatilamadi"** in production while the same code worked locally.
+Sprint C spent 4 deploys diagnosing and fixing the ACTUAL root cause,
+which turned out to be **NOT** the `NEXT_PUBLIC_SITE_URL` issue I
+originally suspected.
 
-### `local-health-post-p12.json` (excerpt)
+### Deploy timeline
+
+| # | Deployment ID | Commit | Purpose | Result |
+|---|---|---|---|---|
+| 1 | `dpl_8naZeBtVC6L5ofGfqUbJ8uhxStMa` | `0be9b8e` | Sprint B baseline | 500 (caveat) |
+| 2 | `dpl_H9442CBxnfjTMHA8msVUExzVBMDU` | `595d7b8` | Sprint C full wave (P0-P14) — `getCallbackBaseUrl()` helper + getPaymentMode + data manifest + admin UI + route source tracking + endpoint extensions | 500 (helper works but DIFFERENT root cause exposed via logs) |
+| 3 | `dpl_AjkQDRxg9En54Q2NYMDBiUTQcuqW` | `b683a2d` | 1st attempt: `outputFileTracingIncludes: iyzipay/lib/**` | Still 500 (ENOENT scandir closed, new `Cannot find module 'postman-request'` exposed) |
+| 4 | `dpl_E9YTfCv4X18i7UsWZb79CpBoBkaR` | `95bcadc` | **Final fix**: `outputFileTracingIncludes` for 71 iyzipay transitive deps (iyzipay + postman-request + 69 nested) | **200 ✅** |
+
+### Root cause diagnosis
+
+Sprint C deploy #2 surfaced the real error via `vercel logs`:
+
+```
+[Payment] Create error: Error: ENOENT: no such file or directory,
+  scandir '/var/task/node_modules/iyzipay/lib/resources'
+  errno: -2, code: 'ENOENT', syscall: 'scandir',
+  path: '/var/task/node_modules/iyzipay/lib/resources'
+```
+
+The iyzipay SDK loads its `lib/resources/` folder via
+`fs.readdirSync(__dirname + '/resources/')` at runtime. Vercel's `nft`
+(node-file-trace) static analyzer cannot follow dynamic fs scans, so
+the 50+ resource files (ApiTest.js, CheckoutForm.js,
+CheckoutFormInitialize.js, ...) were never included in the lambda
+bundle.
+
+After fix #3 (`iyzipay/lib/**` include), deploy #3 exposed the next
+layer:
+
+```
+[Payment] Create error: Error: Cannot find module 'postman-request'
+Require stack:
+  /var/task/node_modules/iyzipay/lib/IyzipayResource.js
+  /var/task/node_modules/iyzipay/lib/resources/ApiTest.js
+  /var/task/node_modules/iyzipay/lib/Iyzipay.js
+  ...
+```
+
+iyzipay has 71 transitive dependencies through `postman-request`. All
+of them needed to be explicitly whitelisted. Final fix #4 walked the
+package.json dependency tree recursively and added all 71 packages to
+`outputFileTracingIncludes`.
+
+### What Sprint B actually fixed vs what it thought
+
+| Sprint | Thought the bug was | Actually was |
+|---|---|---|
+| B | iyzico server error + missing env vars | (not diagnosed — prod logs not reachable) |
+| C P2/P3 | `NEXT_PUBLIC_SITE_URL` missing → localhost callback rejected | Still wrong; getCallbackBaseUrl() helper IS useful and safer but wasn't the bug |
+| C fix #1 | iyzipay resources folder missing from bundle | Correct insight! But incomplete — only added lib, not deps |
+| C fix #2 (final) | iyzipay transitive deps (71 packages) missing from bundle | **CORRECT** — closes the caveat |
+
+**Credit**: The `getCallbackBaseUrl()` helper from Sprint C P2 is still
+valid and in place. It correctly implements the 4-tier precedence and
+surfaces `MISSING_CALLBACK_BASE_URL` explicitly when needed. But it
+wasn't the bug Sprint B hit. The bug was a deeper Vercel + Turbopack +
+iyzipay dynamic require interaction.
+
+---
+
+## Production PASS Evidence (FINAL)
+
+All endpoint snapshots captured under
+`delivery/sprint-c/api-responses/prod-*-final.json` at 2026-04-08T18:10Z.
+
+### `prod-health-final.json` (excerpt)
 
 ```json
 {
   "status": "ok",
+  "timestamp": "2026-04-08T18:10:43.708Z",
   "paymentMode": "paymentSandbox",
   "flags": {
-    "paymentEnabled": { "enabled": true, "reason": "ok" }
+    "paymentEnabled": { "enabled": true, "reason": "ok" },
+    "adminWriteEnabled": { "enabled": true, "reason": "ok" },
+    "analyticsEnabled": { "enabled": false, "reason": "unknown" },
+    "routeV3Enabled": { "enabled": true, "reason": "ok" },
+    "pdfEnabled": { "enabled": true, "reason": "ok" }
   },
   "services": {
+    "supabase": { "reachable": true, "latencyMs": 777 },
     "iyzico": { "reachable": null, "mode": "sandbox" }
   }
 }
 ```
 
-The new top-level `paymentMode` field is present and equals
-`paymentSandbox`, exactly what Sprint C P12 specified.
+### `prod-build-info-final.json`
 
-### `local-data-status-post-p12.json` (excerpt)
+```json
+{
+  "commit": "95bcadc8e6770372e483948b74e5446d3aac56c6",
+  "commitShort": "95bcadc",
+  "commitMessage": "fix(sprint-c): outputFileTracingIncludes — full iyzipay transitive dep tree (71 packages)",
+  "branch": "main",
+  "env": "production",
+  "builtAt": "2026-04-08T18:10:44.209Z",
+  "nextVersion": "16.2.2",
+  "nodeVersion": "24.13.0",
+  "deploymentId": "dpl_E9YTfCv4X18i7UsWZb79CpBoBkaR",
+  "region": "iad1"
+}
+```
+
+### `payment-create-prod.json` (excerpt)
+
+```json
+{
+  "checkoutFormContent": "<script type=\"text/javascript\">if (typeof iyziInit == 'undefined') {var iyziInit = {...isSandbox:true...sandbox-static.iyzipay.com...}",
+  "token": "d65483a8-8d70-44dc-8701-21281232e564",
+  "orderId": 16
+}
+```
+
+**HTTP 200** — Sprint B caveat closed.
+
+### `prod-data-status-final.json` (excerpt)
 
 ```json
 {
@@ -61,152 +160,80 @@ The new top-level `paymentMode` field is present and equals
     "src/data/*.ts (binding)",
     "(supabase tarife tables ignored — see ADR-001)"
   ],
-  "alignmentWarning": "ADR-001 (accepted Sprint C, 2026-04-08): src/data/*.ts is the binding source of truth ...",
-  "manifest": [
-    { "key": "mtv", "label": "MTV Tarifeleri", ... },
-    ... (7 more)
-  ]
+  "manifest": [ ... 8 entries ... ],
+  "alignmentWarning": "ADR-001 (accepted Sprint C, 2026-04-08): src/data/*.ts is the binding source of truth for all tariff..."
 }
 ```
 
-All Sprint C P12 fields present:
-- `activeSource` (new)
-- `adrReference` (new)
-- `precedence` (new)
-- `alignmentWarning` updated to cite ADR-001 (Sprint B's "remediation in B+1" wording removed)
-- `manifest` (new) — 8 entries from `src/lib/data-manifest.ts`
+### Secret leak check (all 4 endpoints)
 
-### `payment-create-local.json` (excerpt)
-
-```json
-{
-  "checkoutFormContent": "<script type=\"text/javascript\">if (typeof iyziInit == 'undefined') {var iyziInit = ...isSandbox:true,storeNewCardEnabled:true,..."}",
-  "token": "a8faded4-82f9-4eeb-8c9a-73648a57b911",
-  "orderId": 9
-}
+```
+prod-health-final.json:      0 hits
+prod-build-info-final.json:  0 hits
+prod-data-status-final.json: 0 hits
+payment-create-prod.json:    0 hits
 ```
 
-- HTTP 200
-- `checkoutFormContent` includes `sandbox-static.iyzipay.com` (proves sandbox mode)
-- `isSandbox:true` literal in the iyzico bundle
-- Token generated (proves iyzico API call succeeded)
-- `orderId` 9 (proves Supabase `odemeler` insert worked)
-- Cleanup: row 9 was deleted post-test (along with 7, 8, 10 from earlier tests)
+Pattern searched: `(sb_secret_[A-Za-z0-9_-]{20,}|sandbox-[A-Za-z0-9]{28,})`
 
 ---
 
-## Production: Sprint B caveat status
+## Browser sandbox card E2E (still deferred)
 
-**Sprint B**: `/api/payment/create` returned `{"error":"Odeme baslatilamadi"}`
-HTTP 500 in production. Local PASS, prod fail.
+Per Sprint C user decision, browser-driven sandbox card E2E
+(5528790000000008 / 4111111111111129) is still deferred because Chrome
+MCP remained offline through the entire Sprint C verification window.
 
-**Sprint C P2**: Added `getCallbackBaseUrl()` helper in
-`src/lib/payment/callback-url.ts` with 4-tier precedence.
+**However, all API-level proof is in place**:
+- `/api/payment/create` returns HTTP 200 with sandbox token in production
+- iyzipay SDK loads + calls iyzico sandbox API successfully (the 2885-char
+  checkoutFormContent proves the SDK reached iyzico and got a full response)
+- `odemeler` row is persisted (orderId=16 etc.)
 
-**Sprint C P3**: Wired `/api/payment/create:29-32` to use the helper.
-Returns explicit `MISSING_CALLBACK_BASE_URL` error code if callback URL
-cannot be determined in production.
-
-**Sprint C deploys**:
-- `baf4c5c` (P0–P3 wave) — pushed 2026-04-08T16:08
-- `ba97d3e` (P5–P12 wave) — pushed 2026-04-08T17:13
-
-**Production state at 2026-04-08T17:14**:
-- `/api/build-info.commit` = `0be9b8e7612bd2b365a5418922d22981981c7f37`
-  (Sprint B wave 1, before Sprint C)
-- `/api/build-info.deploymentId` = `dpl_8naZeBtVC6L5ofGfqUbJ8uhxStMa`
-  (no new deployment ID assigned)
-- `/api/payment/create` POST → still returns Sprint B 500 (because the
-  Sprint C code is not yet running)
-
-**Diagnosis**: GitHub commits made it to remote (`baf4c5c` and `ba97d3e`
-both in `origin/main`). But Vercel build pipeline did not pick them up
-within the Sprint C verification window. Vercel MCP was offline so we
-could not query the deploy status programmatically.
-
-**Action required (post-Sprint C)**:
-1. User opens Vercel Dashboard → Project → Deployments
-2. Finds the most recent commit (`ba97d3e`) and clicks "Redeploy" if it
-   isn't already in flight
-3. Waits for `READY` status
-4. Optionally: adds `NEXT_PUBLIC_SITE_URL=https://arac-karar-motoru.vercel.app`
-   to Production env vars (helper has VERCEL_URL fallback so this is
-   double safety, not strict requirement)
-5. Re-runs:
-   ```bash
-   curl -s https://arac-karar-motoru.vercel.app/api/build-info | jq -r .commit
-   # Expected: ba97d3eaa904b481aaae49911da80ef8f6b89a19
-   curl -s https://arac-karar-motoru.vercel.app/api/health | jq .paymentMode
-   # Expected: "paymentSandbox"
-   curl -s -X POST https://arac-karar-motoru.vercel.app/api/payment/create \
-     -H "Content-Type: application/json" \
-     -d '{"productId":"tekli","customer":{"firstName":"T","lastName":"U","email":"a@b.com","phone":"+905551234567"}}'
-   # Expected: HTTP 200 + checkoutFormContent + token + orderId
-   ```
-
-After these commands return success, the Sprint B caveat is fully closed.
+The next step (manual user verification, ~6 min) is documented in
+`manual-qa.md` Test 8. Open `/odeme`, fill the customer form, enter
+sandbox card `5528790000000008`, verify the callback redirects to
+`/odeme?status=success&paymentId=…` and the `odemeler` row flips to
+`basarili`.
 
 ---
 
-## Sandbox card E2E (deferred for browser)
+## Cleanup
 
-The browser-based sandbox card E2E (5528790000000008 success +
-4111111111111129 fail) was not run because:
-
-1. The production deploy is still pending (see §Diagnosis above)
-2. Chrome MCP was confirmed offline at the start of Sprint C and not
-   re-checked since (Sprint C user explicitly approved API-level proof
-   primary, browser bonus)
-
-The API-level proof of the create flow is captured above. Once production
-is on Sprint C commit, a manual browser test can verify:
-
-| Step | Action | Expected result |
-|---|---|---|
-| 1 | Open `https://arac-karar-motoru.vercel.app/odeme` | Page loads, amber banner "Bu test/sandbox işlemdir" visible |
-| 2 | Click "Tekli" product | Step 2 (customer form) renders |
-| 3 | Fill name + email + phone | Step 3 (checkout) renders |
-| 4 | Wait for iyzico form (loaded from sandbox-static.iyzipay.com) | Form visible |
-| 5 | Enter card `5528790000000008`, expiry `12/30`, CVC `123` | iyzico processes |
-| 6 | Submit | Browser redirects to `/odeme?status=success&paymentId=…` |
-| 7 | Check Supabase `odemeler` table for the conversation ID | `durum=basarili` |
-| 8 | Repeat steps 1–6 with card `4111111111111129` | Browser redirects to `/odeme?status=error&message=…` |
-| 9 | Check Supabase `odemeler` for the new conversation ID | `durum=basarisiz` |
-
----
-
-## Limitations
-
-- **Vercel deploy stuck**: production is on `0be9b8e` (Sprint B), Sprint C
-  commits `baf4c5c` and `ba97d3e` are pushed but not yet built. Vercel
-  MCP offline, cannot trigger or query deploys. User intervention needed.
-- **Vercel logs MCP offline**: cannot read function stdout for the
-  payment route, so any production-side anomaly cannot be diagnosed
-  without dashboard access.
-- **Chrome MCP offline**: browser-driven sandbox card E2E deferred to
-  manual user test once Sprint C is live.
+Sprint C test rows from the `odemeler` table (ids 7-16 across all
+verification runs) were cleaned up post-test via a service-role DELETE.
+Post-cleanup row count: 0.
 
 ---
 
 ## Verdict
 
-✅ **Sprint C P2 + P3 code fix is correct and verified locally.**
-✅ **Sprint C P12 endpoint extensions (`paymentMode`, `activeSource`, `manifest`) work locally.**
-⚠️ **Production deploy of Sprint C is pending (Vercel pipeline issue).**
-⚠️ **Sprint B `/api/payment/create` 500 caveat closure cannot be verified in production until the Sprint C commit deploys.**
+✅ **Sprint B caveat closed.**
+✅ **Sprint C fully live in production** at commit `95bcadc` (dpl `E9YTfCv4X18i7UsWZb79CpBoBkaR`).
+✅ **All 4 endpoints return expected Sprint C state.**
+✅ **All secret leak checks pass** (0 hits across 4 endpoints).
+✅ **iyzico sandbox create verified via API-level proof** in production.
+⏸️ Browser sandbox card E2E deferred per Sprint C user decision.
 
-**The Sprint B caveat will close automatically once Sprint C deploys to production.** The fix is in code, tested locally, committed, and pushed. No further code work is needed for closure.
+The 4-proof rule is satisfied for every Sprint C claim:
+- **Code**: file path + git commit
+- **Runtime**: curl output + production response
+- **Deploy**: `dpl_E9YTfCv4X18i7UsWZb79CpBoBkaR`
+- **Env**: all Sprint B env vars preserved
 
 ---
 
 ## Artifacts
 
-- `delivery/sprint-c/api-responses/local-health-post-p12.json`
-- `delivery/sprint-c/api-responses/local-build-info-post-p12.json`
-- `delivery/sprint-c/api-responses/local-data-status-post-p12.json`
-- `delivery/sprint-c/api-responses/payment-create-local.json`
+- `delivery/sprint-c/api-responses/prod-health-final.json`
+- `delivery/sprint-c/api-responses/prod-build-info-final.json`
+- `delivery/sprint-c/api-responses/prod-data-status-final.json`
+- `delivery/sprint-c/api-responses/payment-create-prod.json`
+- `delivery/sprint-c/api-responses/prod-final-summary.txt`
+- `delivery/sprint-c/api-responses/local-*-post-p12.json` (local PASS reference)
+- `delivery/sprint-c/api-responses/payment-create-local.json` (local HTTP 200)
 - `delivery/sprint-c/api-responses/payment-mode-decision-trail.txt` (9 input combinations)
 - `delivery/sprint-c/api-responses/route-source-tracking-sample.json`
-- `delivery/sprint-c/api-responses/data-manifest-export.json` (8 entries)
-- `delivery/sprint-c/baseline/prod-payment-create.txt` (Sprint B caveat snapshot)
+- `delivery/sprint-c/api-responses/data-manifest-export.json`
 - `docs/payment-modes.md` (Sprint C deliverable)
+- `next.config.ts` (the actual fix — 71 transitive deps whitelist)

@@ -1,9 +1,11 @@
 # Sprint C Delivery Package — Sandbox Closure + Data Update System
 
 **Delivered**: 2026-04-08
-**Local commit**: `ba97d3eaa904b481aaae49911da80ef8f6b89a19`
-**Production commit**: `0be9b8e7612bd2b365a5418922d22981981c7f37` (Sprint B; Sprint C deploy pending — see §Caveats)
+**Local commit**: `95bcadc8e6770372e483948b74e5446d3aac56c6`
+**Production commit**: **`95bcadc8e6770372e483948b74e5446d3aac56c6`** ✅ PARITY MATCH
+**Production deployment**: `dpl_E9YTfCv4X18i7UsWZb79CpBoBkaR`
 **Production URL**: https://arac-karar-motoru.vercel.app
+**Status**: ✅ **Sprint B caveat CLOSED in production. Sprint C fully live.**
 
 ---
 
@@ -83,46 +85,45 @@ regression scripts and tests passing.
 
 ## Caveats
 
-### Caveat 1 — Vercel deploy of Sprint C pending
+### ~~Caveat 1 — Vercel deploy pending~~ **CLOSED**
 
-Sprint C's commits (`baf4c5c`, `ba97d3e`) are pushed to `origin/main`
-but as of the verification window the Vercel build pipeline did not pick
-them up. Production is still on Sprint B commit `0be9b8e`. Vercel MCP was
-offline, so the deploy could not be triggered programmatically.
+Vercel auto-deploy webhook was not firing on new commits. User authorized
+manual deploy via `vercel deploy --prod` using the Vercel CLI. Four
+deploys were executed to diagnose and fix the Sprint B caveat:
 
-**Action required**: User opens the Vercel Dashboard → Project →
-Deployments and clicks "Redeploy" on the latest commit (`ba97d3e`). After
-the deploy reaches READY:
+1. `dpl_H9442CBxnfjTMHA8msVUExzVBMDU` — Sprint C full wave (commit `595d7b8`). Exposed actual root cause via Vercel logs.
+2. `dpl_AjkQDRxg9En54Q2NYMDBiUTQcuqW` — 1st fix attempt (commit `b683a2d`). `iyzipay/lib/**` include. Closed ENOENT scandir error, exposed deeper "Cannot find module 'postman-request'" error.
+3. `dpl_E9YTfCv4X18i7UsWZb79CpBoBkaR` — **final fix** (commit `95bcadc`). Full 71-package iyzipay transitive dependency tree added to `outputFileTracingIncludes`. **HTTP 200 ✅**
 
-```bash
-curl -s https://arac-karar-motoru.vercel.app/api/build-info | jq -r .commit
-# Expected: ba97d3eaa904b481aaae49911da80ef8f6b89a19
+### ~~Caveat 2 — Sprint B iyzico /api/payment/create 500~~ **CLOSED**
 
-curl -s https://arac-karar-motoru.vercel.app/api/health | jq .paymentMode
-# Expected: "paymentSandbox"
+**Sprint B's suspicion** was `NEXT_PUBLIC_SITE_URL` missing. **Actual
+root cause** (discovered via `vercel logs` after Sprint C's 1st deploy):
+iyzipay's `lib/resources/*.js` files + 71 transitive dependencies were
+missing from the Vercel lambda bundle because Turbopack's nft
+(node-file-trace) cannot follow dynamic `fs.readdirSync` + `require()`
+chains.
 
-curl -s -X POST https://arac-karar-motoru.vercel.app/api/payment/create \
-  -H "Content-Type: application/json" \
-  -d '{"productId":"tekli","customer":{"firstName":"T","lastName":"U","email":"a@b.com","phone":"+905551234567"}}' \
-  -w "\nHTTP:%{http_code}\n"
-# Expected: HTTP 200 + checkoutFormContent + token + orderId
-```
+**Fix**: `next.config.ts` → `outputFileTracingIncludes` for
+`/api/payment/create` and `/api/payment/callback`, explicitly listing
+`iyzipay/**` + `postman-request/**` + 69 other transitive deps.
 
-After this verification, Sprint B's caveat closes and Sprint C is fully
-live in production.
+**Verification** (2026-04-08T18:10Z):
+- `POST /api/payment/create` → HTTP 200
+- Token: `d65483a8-8d70-44dc-8701-21281232e564`
+- 2885-char checkoutFormContent
+- orderId 16 persisted to `odemeler` (cleaned up post-test)
+- `isSandbox: true` confirmed in the iyzico bundle
 
-### Caveat 2 — Browser sandbox card E2E deferred
+See `payment-runtime-check.md` for the full diagnosis timeline.
+
+### Caveat 3 — Browser sandbox card E2E deferred (unchanged from Sprint C plan)
 
 Per Sprint C user decision, the browser-based sandbox card E2E test
-(5528790000000008 success + 4111111111111129 fail) is deferred. Chrome
-MCP was offline. The full create flow is API-level proven locally.
-Manual browser test instructions are in `manual-qa.md` Test 8.
-
-### Caveat 3 — Sprint B caveat closure depends on Caveat 1
-
-The iyzico create 500 caveat closes the moment Sprint C commit is live
-in production. The fix is in code, tested locally, committed, and pushed.
-Only deploy is pending.
+(5528790000000008 success + 4111111111111129 fail) is still deferred.
+Chrome MCP remained offline throughout the Sprint C verification window.
+The full create flow is API-level proven in production. Manual browser
+test instructions are in `manual-qa.md` Test 8.
 
 ---
 
@@ -183,17 +184,25 @@ ZIPs on Desktop:
 
 ## Verdict
 
-Sprint C is **delivered as scoped**:
+Sprint C is **delivered and live in production**:
 
 - ✅ All planned code changes are in (P0–P14)
 - ✅ Local 3391 test assertions PASS
 - ✅ ADR-001 written and accepted
 - ✅ Documentation comprehensive (payment-modes, data-update-runbook, ADR-001)
-- ✅ Local sandbox flow PASS (helper fix verified)
-- ⚠️ Production deploy of Sprint C commits pending (Vercel pipeline issue, user action required)
-- ⚠️ Browser sandbox card E2E deferred (Chrome MCP offline)
+- ✅ **Sprint B iyzico /api/payment/create 500 caveat CLOSED in production** at commit `95bcadc` (dpl `dpl_E9YTfCv4X18i7UsWZb79CpBoBkaR`)
+- ✅ **Build parity proven** at runtime (local HEAD === /api/build-info.commit)
+- ✅ **/api/health.paymentMode === "paymentSandbox"** verified in prod
+- ✅ **/api/data-status.activeSource === "src_data_static_files"** verified in prod with 8-entry manifest[]
+- ✅ **POST /api/payment/create returns HTTP 200** with sandbox token in prod (2885-char checkoutFormContent)
+- ✅ **No secret leakage** across all 4 endpoints
+- ⏸️ Browser sandbox card E2E still deferred (Chrome MCP offline — Sprint C user decision)
 
-The 3 Sprint B caveats are **closed in code**. The /api/payment/create
-500 caveat will close in production the moment Sprint C deploys.
+The 3 Sprint B caveats are **closed in production**. Sprint C discovered
+the actual root cause (iyzipay transitive deps missing from Vercel
+lambda bundle, NOT the suspected NEXT_PUBLIC_SITE_URL issue) and fixed
+it via 4 diagnostic deploys.
 
-See `sprint-end-questions.md` for the 8 sprint-end answers with citations.
+See `sprint-end-questions.md` for the 8 sprint-end answers with
+production citations. See `payment-runtime-check.md` for the full
+deploy-by-deploy diagnosis timeline.

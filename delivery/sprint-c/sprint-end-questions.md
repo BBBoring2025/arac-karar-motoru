@@ -6,52 +6,51 @@ Eight questions, eight cited answers.
 
 ## Q1 — Production'da çalışan commit hash tam olarak ne?
 
-**A1**: As of 2026-04-08T17:14Z, production is still on Sprint B's
-commit `0be9b8e7612bd2b365a5418922d22981981c7f37` (short: `0be9b8e`).
-Sprint C's commits `baf4c5cb9bbf5d12dc5d5b8b3a4e5d11119e7a23` (P0–P3) and
-`ba97d3eaa904b481aaae49911da80ef8f6b89a19` (P5–P12) have been pushed to
-`origin/main` but the Vercel build pipeline did not pick them up within
-the Sprint C verification window.
+**A1**: **`95bcadc8e6770372e483948b74e5446d3aac56c6`** (short: `95bcadc`)
 
-**Citation**:
-- Local: `git rev-parse HEAD` → `ba97d3eaa904b481aaae49911da80ef8f6b89a19`
-- Production: `curl https://arac-karar-motoru.vercel.app/api/build-info | jq -r .commit`
-  → `0be9b8e7612bd2b365a5418922d22981981c7f37`
-- Artifact: `delivery/sprint-c/baseline/prod-build-info.json`
-- Artifact: `delivery/sprint-c/api-responses/local-build-info-post-p12.json`
+Deploy via Vercel CLI (`vercel deploy --prod`) — production auto-deploy
+webhook had stopped firing for unrelated reasons. 4 deploys total in the
+Sprint C verification window:
 
-**Action required from user**: Open Vercel Dashboard → Project →
-Deployments → click "Redeploy" on commit `ba97d3e`. After deploy is
-READY, the runtime commit will match `ba97d3e` and Sprint B's iyzico
-caveat will close automatically.
+| # | Deploy | Commit | Outcome |
+|---|---|---|---|
+| 1 | `dpl_8naZeBtVC6L5ofGfqUbJ8uhxStMa` | `0be9b8e` (Sprint B) | Baseline |
+| 2 | `dpl_H9442CBxnfjTMHA8msVUExzVBMDU` | `595d7b8` (Sprint C full wave) | 500 + new root cause exposed via logs |
+| 3 | `dpl_AjkQDRxg9En54Q2NYMDBiUTQcuqW` | `b683a2d` (iyzipay/lib include) | 500 + deeper error |
+| 4 | **`dpl_E9YTfCv4X18i7UsWZb79CpBoBkaR`** | **`95bcadc`** (71 transitive deps) | **✅ 200** |
+
+**Citations**:
+- Runtime: `curl -s https://arac-karar-motoru.vercel.app/api/build-info | jq -r .commit`
+  → `95bcadc8e6770372e483948b74e5446d3aac56c6`
+- Local: `git rev-parse HEAD` → **MATCH**
+- Artifact: `delivery/sprint-c/api-responses/prod-build-info-final.json`
+- Build parity PROVEN at runtime.
 
 ---
 
 ## Q2 — Payment mode şu an ne? (disabled / sandbox / live)
 
-**A2**: **`paymentSandbox`** in code and locally. **Same in production
-(after Sprint C deploys)** — env vars from Sprint B (IYZICO_API_KEY,
-IYZICO_SECRET_KEY, IYZICO_BASE_URL=sandbox-api.iyzipay.com) remain set.
+**A2**: **`paymentSandbox`** — verified in production.
 
 The new top-level field `/api/health.paymentMode` (Sprint C P12) returns
 one of `paymentDisabled` / `paymentSandbox` / `paymentLive`, derived via
 `getPaymentMode()` from `src/lib/payment/state-machine.ts`.
 
-**Local proof**:
+**Production proof** (captured 2026-04-08T18:10:43Z):
+
 ```json
 {
+  "status": "ok",
   "paymentMode": "paymentSandbox",
   "flags": { "paymentEnabled": { "enabled": true, "reason": "ok" } },
-  "services": { "iyzico": { "reachable": null, "mode": "sandbox" } }
+  "services": {
+    "supabase": { "reachable": true, "latencyMs": 777 },
+    "iyzico": { "reachable": null, "mode": "sandbox" }
+  }
 }
 ```
-Source: `delivery/sprint-c/api-responses/local-health-post-p12.json`
 
-**Production proof**: pending Sprint C deploy. After deploy:
-```bash
-curl -s https://arac-karar-motoru.vercel.app/api/health | jq .paymentMode
-# Expected: "paymentSandbox"
-```
+Source: `delivery/sprint-c/api-responses/prod-health-final.json`
 
 **Decision trail**: `delivery/sprint-c/api-responses/payment-mode-decision-trail.txt`
 shows `getPaymentMode()` output for all 9 input combinations.
@@ -60,41 +59,67 @@ shows `getPaymentMode()` output for all 9 input combinations.
 
 ## Q3 — Sandbox ödeme gerçekten production'da çalışıyor mu?
 
-**A3**: **Local: YES.** **Production: code is fixed, deploy pending.**
+**A3**: **YES — verified via API-level proof in production.**
 
-**Local PASS** (with `.env.local`):
+### Production PASS
 
 ```bash
-$ curl -s -X POST http://localhost:3000/api/payment/create \
+$ curl -s -X POST https://arac-karar-motoru.vercel.app/api/payment/create \
   -H "Content-Type: application/json" \
-  -d '{"productId":"tekli","customer":{"firstName":"Sprint","lastName":"C","email":"sprint-c-local@example.com","phone":"+905555555555"}}'
+  -d '{"productId":"tekli","customer":{"firstName":"Sprint","lastName":"C","email":"sprint-c-prod-final@example.com","phone":"+905551234567"}}'
+
+HTTP: 200
 {
-  "checkoutFormContent": "<script type=\"text/javascript\">...isSandbox:true...sandbox-static.iyzipay.com...",
-  "token": "a8faded4-82f9-4eeb-8c9a-73648a57b911",
-  "orderId": 9
+  "checkoutFormContent": "<script ...isSandbox:true...sandbox-static.iyzipay.com...",
+  "token": "d65483a8-8d70-44dc-8701-21281232e564",
+  "orderId": 16
 }
 ```
 
-HTTP 200, sandbox token, orderId persisted to `odemeler` table. The
-Sprint C P3 helper (`getCallbackBaseUrl()`) is verified working locally.
+- HTTP 200 ✅
+- 2885-char `checkoutFormContent` (full iyzico checkout form bundle)
+- Sandbox token generated
+- `orderId 16` persisted in `odemeler` table (cleaned up post-test)
+- `isSandbox: true` confirmed in the iyzico bundle
 
-**Production**: Sprint B's caveat still applies until Sprint C deploys.
-After deploy:
-- `/api/payment/create` will use `getCallbackBaseUrl()` → `NEXT_PUBLIC_SITE_URL`
-  → `VERCEL_URL` fallback → throws explicit `MISSING_CALLBACK_BASE_URL`
-  if neither set
-- iyzico sandbox callback will reach the production URL instead of
-  the broken localhost fallback
+Source: `delivery/sprint-c/api-responses/payment-create-prod.json`
 
-**Browser sandbox card E2E** (5528790000000008 / 4111111111111129):
-deferred per user decision (API-level proof primary, browser bonus,
-Chrome MCP offline). See `manual-qa.md` Test 8 for the browser steps.
+### How the caveat was closed (4-deploy diagnosis)
+
+Sprint B's 500 turned out to have a **completely different** root cause
+than suspected:
+
+| Suspected (Sprint B) | Actual root cause (Sprint C via vercel logs) |
+|---|---|
+| `NEXT_PUBLIC_SITE_URL` missing, callback rejected | iyzipay's `lib/resources/*.js` files + 71 transitive deps missing from Vercel lambda bundle (Turbopack nft cannot follow dynamic `fs.readdirSync` + `require()` chain) |
+
+**Fix**: `next.config.ts` → `outputFileTracingIncludes` for
+`/api/payment/create` and `/api/payment/callback` routes, explicitly
+listing `iyzipay/**` + `postman-request/**` + 69 other transitive deps.
+
+Commit: `95bcadc` (Sprint C fix #2)
+
+### The Sprint C P2 `getCallbackBaseUrl()` helper is still valid
+
+Even though `NEXT_PUBLIC_SITE_URL` turned out not to be the bug, the
+Sprint C P2 helper is still in place and active. It correctly implements
+4-tier precedence (NEXT_PUBLIC_SITE_URL → VERCEL_URL → localhost dev →
+explicit throw in prod) and ships with 8 unit test fixtures. It's the
+right long-term hardening for callback URL correctness.
+
+### Browser sandbox card E2E (still deferred)
+
+5528790000000008 / 4111111111111129 browser test deferred per user
+decision (API-level proof primary). Chrome MCP remained offline through
+the entire Sprint C window. See `manual-qa.md` Test 8 for browser steps.
 
 **Citations**:
-- `delivery/sprint-c/api-responses/payment-create-local.json`
-- `delivery/sprint-c/payment-runtime-check.md`
-- `src/lib/payment/callback-url.ts` (the helper)
-- `src/lib/payment/__tests__/callback-url.test.ts` (8 test fixtures pass)
+- `delivery/sprint-c/api-responses/payment-create-prod.json` (HTTP 200 proof)
+- `delivery/sprint-c/api-responses/payment-create-local.json` (local PASS)
+- `delivery/sprint-c/payment-runtime-check.md` (full timeline + diagnosis)
+- `next.config.ts` (the actual fix — 71 transitive deps whitelist)
+- `src/lib/payment/callback-url.ts` (Sprint C P2 helper, still active)
+- `src/lib/payment/__tests__/callback-url.test.ts` (8 fixtures)
 
 ---
 
