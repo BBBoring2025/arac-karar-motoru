@@ -2,13 +2,14 @@
 
 **Single source of truth for what's running after Sprint D.**
 
-Last verified: 2026-04-09 (Sprint D deploy pending P14 capture)
-Local HEAD: Sprint D final commit (filled in post-P14)
-Production commit: post-P14 capture
-Previous: `delivery/sprint-c/runtime-status.md` (c34193a)
+Last verified: 2026-04-08 (post-P14 deploy)
+Local HEAD: `9371f75752e0b36de191ee55e53e9806310e3206`
+Production commit: `9371f75752e0b36de191ee55e53e9806310e3206` (matches HEAD ✓)
+Production deployment: `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` (READY)
+Previous: `delivery/sprint-c/runtime-status.md` (c34193a, dpl_4Go7mVr4dTV1X5R83N7LEPSoj66h)
 Live URL: https://arac-karar-motoru.vercel.app
 
-**Status**: ✅ Sprint D code complete + local tests passing + delivery ready; deploy + migration pending in P14.
+**Status**: ✅ Sprint D deployed to production. All endpoints verified except `/api/early-access` which requires migration 003 to be applied (user action). Plausible env var intentionally not set — analytics honest-disabled state is the Sprint D final decision.
 
 ---
 
@@ -39,24 +40,26 @@ Live URL: https://arac-karar-motoru.vercel.app
 | Service | Code | Runtime | Deploy | Env | Status |
 |---|---|---|---|---|---|
 | MTV/Muayene/Yakit/Otoyol/Rota calculators | unchanged (Sprint A/B) | 200 with new `<DataSourceFooter>` only | post-P14 dpl | N/A | ✅ LIVE |
-| `/api/health.publicBetaMode` | `src/lib/flags.ts`, `src/app/api/health/route.ts` | `true` expected post-deploy | post-P14 | `PUBLIC_BETA_MODE` (default TRUE) | ✅ LIVE NEW |
-| `/api/health.dataFreshness` | Sprint D P9 | `staleCount >= 1`, yakit | post-P14 | N/A | ✅ LIVE NEW |
-| `/api/data-status.dataFreshness.staleSummary` | Sprint D P9 | contains yakit entry | post-P14 | N/A | ✅ LIVE NEW |
-| `/api/early-access` POST | `src/app/api/early-access/route.ts` | HTTP 200 post-migration-apply | post-P14 | `SUPABASE_SERVICE_ROLE_KEY` (Sprint B) | ✅ LIVE NEW (post-migration) |
-| `/api/admin/early-access` GET | `src/app/api/admin/early-access/route.ts` | Admin-guarded list | post-P14 | Sprint B auth | ✅ LIVE NEW |
-| Header BETA pill | `Header.tsx` + `usePublicBeta` | visible on every page | post-P14 | N/A | ✅ LIVE NEW |
-| Footer disclosure block | `Footer.tsx` + `usePublicBeta` | visible on every page | post-P14 | N/A | ✅ LIVE NEW |
-| `/odeme` waitlist variant | `src/app/odeme/page.tsx` WaitlistVariant | EarlyAccessForm rendered for public users | post-P14 | — | ✅ LIVE NEW |
-| `/odeme?mode=sandbox` admin path | same file, isAdminTestMode state | Sprint C 3-step preserved | post-P14 | — | ✅ PRESERVED |
-| `/odeme?status=success` callback | unchanged Sprint C | `<PaymentResult />` renders | post-P14 | — | ✅ PRESERVED |
-| Plausible `<Script>` conditional | `src/app/layout.tsx` | loaded IFF env var set | post-P14 | `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` | ✅ CODE READY, env optional |
-| 10 analytics events wired | 7 page files | fires IFF provider set | post-P14 | same as above | ✅ CODE READY |
-| Admin 4-tab layout | `src/app/admin/page.tsx` | login → 4 tabs | post-P14 | Sprint B auth | ✅ LIVE NEW |
-| Admin stale warning card | `src/app/admin/page.tsx` dashboard | yellow card with yakit | post-P14 | — | ✅ LIVE NEW |
-| Sprint C callback-url helper | `src/lib/payment/callback-url.ts` | 8 fixture tests | post-P14 | Sprint C | ✅ PRESERVED |
-| Sprint C getPaymentMode | `src/lib/payment/state-machine.ts` | 9 fixture tests | post-P14 | Sprint C | ✅ PRESERVED |
-| Sprint C data-manifest | `src/lib/data-manifest.ts` | 84 existing + 51 new = 135 tests | post-P14 | — | ✅ PRESERVED + EXTENDED |
-| Sprint C iyzipay 71-deps fix | `next.config.ts` | iyzico create still 200 prod | post-P14 | Sprint C | ✅ PRESERVED |
+| `/api/health.publicBetaMode` | `src/lib/flags.ts`, `src/app/api/health/route.ts` | `true` ✓ (curl verified) | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | `PUBLIC_BETA_MODE` unset → fail-safe TRUE | ✅ LIVE NEW |
+| `/api/health.dataFreshness` | Sprint D P9 | `{staleCount:1, oldestStaleKey:"yakit", oldestStaleDays:83}` ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | N/A | ✅ LIVE NEW |
+| `/api/data-status.dataFreshness.staleSummary` | Sprint D P9 | contains full yakit entry ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | N/A | ✅ LIVE NEW |
+| `/api/early-access` POST | `src/app/api/early-access/route.ts` | Handler deployed ✓; returns 500 `db_error` PGRST205 until migration 003 applied | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | `SUPABASE_SERVICE_ROLE_KEY` (Sprint B) | ⏳ CODE LIVE, migration manual pending |
+| `/api/early-access` POST validation | `src/app/api/early-access/validation.ts` | 400 `ad_too_short` on invalid payload ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | N/A | ✅ LIVE NEW |
+| `/api/admin/early-access` GET | `src/app/api/admin/early-access/route.ts` | Admin-guarded list, awaits migration | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | Sprint B auth | ⏳ CODE LIVE, migration manual pending |
+| Header BETA pill | `Header.tsx` + `usePublicBeta` | Present in `/` + `/odeme` HTML ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | N/A | ✅ LIVE NEW |
+| Footer disclosure block | `Footer.tsx` + `usePublicBeta` | Present in `/` + `/odeme` HTML ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | N/A | ✅ LIVE NEW |
+| `/odeme` waitlist variant | `src/app/odeme/page.tsx` WaitlistVariant | Production JS chunk contains `Erken Erişim Listesi` + `waitlist_signup` + `early-access` + `odeme_mode` ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | — | ✅ LIVE NEW |
+| `/odeme?mode=sandbox` admin path | same file, isAdminTestMode state | JS chunk contains `sandbox modu` + `paymentSandbox` + amber preserved ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | — | ✅ PRESERVED |
+| `/odeme?status=success` callback | unchanged Sprint C | Sprint C fixture tests (9 state-machine + 8 callback-url) still green | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | — | ✅ PRESERVED |
+| Plausible `<Script>` conditional | `src/app/layout.tsx` | 0 plausible.io hits in prod HTML (env var intentionally unset) ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` unset (Sprint D user decision) | ✅ HONEST DISABLED |
+| `/api/health.flags.analyticsEnabled` | `src/lib/flags.ts::getServerFlags` | `{enabled:false, reason:'missing_env'}` ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | same as above | ✅ HONEST NEW (replaced Sprint B `'unknown'` lie) |
+| 11 analytics call-sites wired | 7 page files | JS chunks contain `trackCheckoutStarted`, `trackPaymentSuccess`, `trackPaymentFailed`, `waitlist_signup`, `trackToolOpened`, `trackCalculation` ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | same as above | ✅ CODE LIVE, fires as no-op (honest) |
+| Admin 4-tab layout | `src/app/admin/page.tsx` | login → 4 tabs (code deployed, manual auth test deferred) | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | Sprint B auth | ✅ LIVE NEW |
+| Admin stale warning card | `src/app/admin/page.tsx` dashboard | yellow card expected with yakit (computed from same manifest as `/api/health`) | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | — | ✅ LIVE NEW |
+| Sprint C callback-url helper | `src/lib/payment/callback-url.ts` | 8 fixture tests still passing locally | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | Sprint C | ✅ PRESERVED |
+| Sprint C getPaymentMode | `src/lib/payment/state-machine.ts` | 9 fixture tests still passing locally | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | Sprint C | ✅ PRESERVED |
+| Sprint C data-manifest | `src/lib/data-manifest.ts` | 84 existing + 51 new = 135 tests passing locally | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | — | ✅ PRESERVED + EXTENDED |
+| Sprint C iyzipay 71-deps fix | `next.config.ts` | build completed in 25s on Vercel, no missing-deps | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | Sprint C | ✅ PRESERVED |
 
 ---
 
@@ -64,14 +67,14 @@ Live URL: https://arac-karar-motoru.vercel.app
 
 See `delivery/sprint-d/sprint-end-questions.md` for full answers. Summary:
 
-1. **Production commit**: Sprint D final SHA (post-P14)
-2. **Payment mode**: `paymentSandbox` (Sprint C state unchanged)
-3. **publicBetaMode active**: YES (fail-safe default TRUE)
-4. **Analytics active**: YES if env var set, honest-disabled otherwise
-5. **Early access working**: YES post migration apply
-6. **Approximate data**: yakit (stale 84 days), district offset, highway segments (all surfaced via /api/data-status.dataFreshness)
-7. **Source-of-truth consistency**: YES (ADR-001 unchanged, new methodology-parity doc)
-8. **Live launch gating items**: merchant agreement + KVKK + live env swap + `PUBLIC_BETA_MODE=false`
+1. **Production commit**: `9371f75752e0b36de191ee55e53e9806310e3206` (verified via `/api/build-info.commit`)
+2. **Payment mode**: `paymentSandbox` (Sprint C state preserved; public users now see waitlist instead of sandbox 3-step)
+3. **publicBetaMode active**: YES — `/api/health.publicBetaMode === true` (fail-safe default TRUE, `PUBLIC_BETA_MODE` env var intentionally unset)
+4. **Analytics active**: NO — `/api/health.flags.analyticsEnabled === {enabled:false, reason:'missing_env'}` (honest state per Sprint D user decision to defer Plausible)
+5. **Early access working**: CODE LIVE, DB schema PENDING migration 003 manual apply via Supabase Dashboard SQL Editor (Supabase MCP offline at deploy time)
+6. **Approximate data**: yakit (stale 83 days per `/api/data-status.dataFreshness.staleSummary[0]`), district offset (intentional formula), highway segments (confidence='kesin' for bridges, 'tahmini' for segments per manifest)
+7. **Source-of-truth consistency**: YES — ADR-001 still binding, no Sprint D writes to `src/data/`, new `docs/methodology-parity.md` tabulates 7/10 matches + 2/10 formulas + 1/10 documented drift
+8. **Live launch gating items**: (a) merchant agreement + KVKK vendor review, (b) live iyzico env vars `IYZICO_API_KEY/IYZICO_SECRET_KEY/IYZICO_BASE_URL=https://api.iyzipay.com`, (c) `PUBLIC_BETA_MODE=false`, (d) refresh yakit data, (e) apply migration 003 (Sprint D admin feature pending)
 
 ---
 

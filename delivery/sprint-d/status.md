@@ -16,7 +16,7 @@
 | P11 | 4 calc page hardcoded Bilgilendirme Card cleanup | ✅ DONE | mtv/muayene/otoyol/yakit all have their hardcoded "Bilgilendirme" Card removed. `<DataSourceFooter>` is single source. Sprint C P11 "Sizin fiyatınız" fuel override UX preserved |
 | P12 | Methodology parity doc | ✅ DONE | `docs/methodology-parity.md` (audit: 7/10 direct match, 2/10 intentional formulas, 1/10 content drift, 1 gap — Sprint E candidates) |
 | P13 | Manual QA + delivery package | ✅ DONE | This file + sibling delivery docs, ~21 files total |
-| P14 | Vercel CLI deploy + 4-proof + ZIPs | ⏳ NEXT | Migration apply (user), env var add (user, optional), commit + push, `vercel deploy --prod`, 4-proof verification, ZIPs on Desktop |
+| P14 | Vercel CLI deploy + 4-proof + ZIPs | ✅ DONE (migration 003 user-pending) | Commit `9371f75` pushed; `npx vercel deploy --prod --yes` → `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` READY; prod parity MATCH; /api/health + /api/data-status + /api/build-info all verified; /odeme + calc chunks contain Sprint D markers; 2 Desktop ZIPs created (arac-karar-motoru-sprint-d-9371f75.zip 682KB, delivery-sprint-d-9371f75.zip 74KB) + secret leak clean; migration 003 user-manual pending via Supabase Dashboard SQL Editor; Plausible env var intentionally deferred (honest-disabled per user decision) |
 
 ---
 

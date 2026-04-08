@@ -1,0 +1,16 @@
+=== Sprint D markers verified in prod JS chunk (0ylwmzmqx7t1o.js) ===
+
+Erken Erişim Listesi
+amber
+early-access
+odeme_mode
+paymentSandbox
+sandbox modu
+trackCheckoutStarted
+trackPaymentFailed
+trackPaymentSuccess
+waitlist_signup
+
+=== Sprint D markers in calculator page chunks ===
+
+mtv-hesaplama chunk 0mg0bf8gcr0yb.js: trackCalculation, trackToolOpened
