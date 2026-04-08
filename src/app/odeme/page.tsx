@@ -17,6 +17,12 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { PRODUCTS } from '@/lib/payment/products';
 import type { PaymentProduct } from '@/lib/payment/types';
+import {
+  derivePaymentState,
+  isCheckoutActive,
+  isCallbackLanding,
+  type PaymentState,
+} from '@/lib/payment/state-machine';
 
 /** Step indicator at the top of the flow */
 function StepIndicator({ current }: { current: number }) {
@@ -520,6 +526,8 @@ function ComingSoon() {
 function OdemeContent() {
   const searchParams = useSearchParams();
   const status = searchParams.get('status');
+  const callbackMessage = searchParams.get('message');
+  const callbackPaymentId = searchParams.get('paymentId');
 
   const [step, setStep] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<PaymentProduct | null>(
@@ -531,54 +539,67 @@ function OdemeContent() {
     email: string;
     phone: string;
   } | null>(null);
-  // If callback status is present, we know payment is enabled
-  const [paymentEnabled, setPaymentEnabled] = useState<boolean | null>(
-    status ? true : null
-  );
 
-  // Check if payment is enabled by probing the create endpoint
+  // Payment state derived from /api/health + callback query params.
+  // Null until /api/health fetch completes.
+  const [paymentState, setPaymentState] = useState<PaymentState | null>(null);
+
+  // Fetch /api/health to determine payment state (Sprint B: state machine wiring)
   useEffect(() => {
-    // Skip probe if we already know (callback status present)
-    if (paymentEnabled !== null) return;
+    let cancelled = false;
 
-    // Quick probe: try to reach the API
-    fetch('/api/payment/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    })
-      .then((res) => {
-        // If we get 400 (validation error) that means the endpoint exists and payment is configured
-        // If we get 500 with specific error about config, it is not enabled
-        if (res.status === 400) {
-          setPaymentEnabled(true);
-        } else {
-          return res.json().then((data) => {
-            // If error message is about configuration, payment is not enabled
-            if (
-              data.error?.includes('yapilandirilmamis') ||
-              data.error?.includes('not configured')
-            ) {
-              setPaymentEnabled(false);
-            } else {
-              setPaymentEnabled(true);
-            }
-          });
+    async function detectState() {
+      // If callback status present, derive state directly without /api/health
+      if (status) {
+        const state = derivePaymentState({
+          paymentEnabled: true, // callback presence implies payment was enabled
+          iyzicoMode: null,
+          callbackStatus: status,
+          callbackMessage,
+          paymentId: callbackPaymentId,
+        });
+        if (!cancelled) setPaymentState(state);
+        return;
+      }
+
+      // Fetch /api/health to get server-side flag state
+      try {
+        const res = await fetch('/api/health', { cache: 'no-store' });
+        if (!res.ok) throw new Error('health_fetch_failed');
+        const health = await res.json();
+
+        const state = derivePaymentState({
+          paymentEnabled: health?.flags?.paymentEnabled?.enabled === true,
+          iyzicoMode: health?.services?.iyzico?.mode ?? null,
+          callbackStatus: null,
+          callbackMessage: null,
+          paymentId: null,
+        });
+        if (!cancelled) setPaymentState(state);
+      } catch {
+        // Fallback: if /api/health fails, treat as disabled_no_env (safe default)
+        if (!cancelled) {
+          setPaymentState(
+            derivePaymentState({
+              paymentEnabled: false,
+              iyzicoMode: null,
+              callbackStatus: null,
+              callbackMessage: null,
+              paymentId: null,
+            }),
+          );
         }
-      })
-      .catch(() => {
-        // Network error or server not running — assume enabled and let user try
-        setPaymentEnabled(true);
-      });
-  }, [paymentEnabled]);
+      }
+    }
 
-  // If callback status present, show result
-  if (status) {
-    return <PaymentResult />;
-  }
+    void detectState();
+    return () => {
+      cancelled = true;
+    };
+  }, [status, callbackMessage, callbackPaymentId]);
 
-  // Loading state while checking payment availability
-  if (paymentEnabled === null) {
+  // Loading state while fetching /api/health
+  if (paymentState === null) {
     return (
       <div className="text-center py-12">
         <Loader2 className="w-8 h-8 text-orange-400 animate-spin mx-auto mb-4" />
@@ -587,12 +608,17 @@ function OdemeContent() {
     );
   }
 
+  // Callback landing (success / failed / callback_error)
+  if (isCallbackLanding(paymentState)) {
+    return <PaymentResult />;
+  }
+
   // Payment not enabled — show coming soon
-  if (!paymentEnabled) {
+  if (!isCheckoutActive(paymentState)) {
     return <ComingSoon />;
   }
 
-  // Payment flow
+  // Payment flow (ready_sandbox or ready_production)
   return (
     <>
       <StepIndicator current={step} />
@@ -623,6 +649,13 @@ function OdemeContent() {
           customer={customer}
           onBack={() => setStep(2)}
         />
+      )}
+
+      {/* Dev-only state indicator */}
+      {process.env.NODE_ENV !== 'production' && (
+        <div className="mt-8 text-center text-xs text-gray-600">
+          <code>state: {paymentState.name}</code>
+        </div>
       )}
     </>
   );

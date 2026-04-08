@@ -40,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Sprint B: dev helper scripts (macOS provenance issues)
+dev.sh
+
+# Sprint B: admin credentials (never committed)
+delivery/sprint-b/admin-credentials.md
+delivery/**/admin-credentials.md

@@ -7,6 +7,7 @@
  */
 
 import type { AnalyticsEvent } from './types';
+import { getClientFlags } from '../flags';
 
 const IS_BROWSER = typeof window !== 'undefined';
 const IS_DEV = process.env.NODE_ENV === 'development';
@@ -21,15 +22,17 @@ declare global {
 
 /**
  * Analytics etkin mi?
- * Browser'da çalışıyorsa ve (dev modundaysa VEYA provider yüklüyse) true.
+ * Delegates to centralized flags (src/lib/flags.ts::getClientFlags).
+ * Dev mode override korunur — development'ta console.log için true döner.
  */
 function isEnabled(): boolean {
   if (!IS_BROWSER) return false;
   if (IS_DEV) return true;
-  // Production'da: GA4 veya Plausible yüklüyse true
-  if (window.gtag) return true;
-  if (window.plausible) return true;
-  return false;
+  const flags = getClientFlags({
+    gtag: !!window.gtag,
+    plausible: !!window.plausible,
+  });
+  return flags.analyticsEnabled.enabled;
 }
 
 /**

@@ -1,0 +1,287 @@
+====================================================================
+ ARAC KARAR MOTORU — Sprint B: Runtime Verification & Deploy Parity
+ BUILD LOG — Phase P4 Local Verification
+====================================================================
+Tarih: 2026-04-08 07:21:12
+Git HEAD: dd408ef225ea5eb1cebe76509dd296d1cbc57872
+Branch: main
+
+=== TypeScript (strict) ===
+✓ 0 hata
+
+=== ESLint ===
+
+> arac-karar-motoru@0.1.0 lint
+> eslint
+
+✓ 0 hata
+
+=== Next.js build ===
+
+> arac-karar-motoru@0.1.0 build
+> next build
+
+▲ Next.js 16.2.2 (Turbopack)
+- Environments: .env.local
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 1707ms
+  Running TypeScript ...
+  Finished TypeScript in 1443ms ...
+  Collecting page data using 9 workers ...
+  Generating static pages using 9 workers (0/25) ...
+  Generating static pages using 9 workers (6/25) 
+  Generating static pages using 9 workers (12/25) 
+  Generating static pages using 9 workers (18/25) 
+✓ Generating static pages using 9 workers (25/25) in 164ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin
+├ ƒ /api/admin/dashboard
+├ ƒ /api/admin/tarifeleri
+├ ƒ /api/build-info
+├ ƒ /api/data-status
+├ ƒ /api/health
+├ ƒ /api/payment/callback
+├ ƒ /api/payment/create
+├ ƒ /api/raporlar
+├ ○ /araclar/mtv-hesaplama
+├ ○ /araclar/muayene-ucreti
+├ ○ /araclar/otoyol-hesaplama
+├ ○ /araclar/rota-maliyet
+├ ○ /araclar/yakit-hesaplama
+├ ○ /gizlilik
+├ ○ /hakkimizda
+├ ○ /iletisim
+├ ○ /kvkk
+├ ○ /metodoloji
+├ ○ /odeme
+├ ○ /rapor
+├ ○ /robots.txt
+├ ○ /sitemap.xml
+└ ○ /sss
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+=== Route tests ===
+
+Test 1: İstanbul → Bursa (Osmangazi Köprüsü dahil)
+  ✓ Mesafe: 161.6 (beklenen: 120-200)
+  ✓ Geçiş ücreti > 0
+  ✓ Osmangazi Köprüsü geçişi dahil
+  ✓ Güven seviyesi geçerli: yüksek
+
+Test 2: Ankara → Konya
+  ✓ Mesafe: 267.3 (beklenen: 240-310)
+  ✓ Yakıt maliyeti > 0
+  ✓ Toplam maliyet > 0
+
+Test 3: İstanbul → Ankara (O-4 koridoru)
+  ✓ Mesafe: 483.7 (beklenen: 400-520)
+  ✓ Otoyol ücretleri > 0
+  ✓ Toll breakdown dolu
+
+Test 4: Bursa içi (Nilüfer → Osmangazi)
+  ✓ Mesafe (şehir içi): 10.4 (beklenen: 3-30)
+  ✓ Geçiş ücreti yok
+
+Test 5: İstanbul → Bursa (ücretli yol kapalı)
+  ✓ Ücretsiz rota >= ücretli rota (668.6 vs 161.6)
+
+Test 6: Gidiş-dönüş (maliyetler 2x)
+  ✓ Gidiş-dönüş mesafe 2x: 534.6
+  ✓ Gidiş-dönüş yakıt ≈2x: 1564 (tek yön: 782)
+  ✓ Gidiş-dönüş geçiş ücreti 2x: 0
+
+Test 7: Avrasya Tüneli bağlantısı (istanbul-avrupa → istanbul-anadolu)
+  ✓ Rota bulundu
+  ✓ Path en az 2 node: 4
+  ✓ En az bir boğaz geçişi kullanıldı
+
+Test 8: Hakkari → Edirne (uzun mesafe, graf bağlantı kontrolü)
+  ✓ Rota bulundu
+  ✓ Mesafe: 2158.7 (beklenen: 1500-2200)
+  ✓ Yakıt maliyeti > 0
+  ✓ Toplam maliyet > 0
+
+Test 9: İstanbul → Ankara (ücretli yol kapalı, uyarı kontrolü)
+  ✓ Rota bulundu
+  ✓ Toll avoidance uyarısı mevcut
+
+Test 10: İstanbul → Bursa (ücretli yol kapalı, serbest alternatif)
+  ✓ Ücretsiz rota daha uzun: 668.6 > 161.6
+  ✓ Osmangazi Köprüsü ücretsiz rotada YOK
+
+Test 11: İzmit (Kocaeli) → Kaş (Antalya)
+  ✓ Rota bulundu
+  ✓ Mesafe: 771.1 (beklenen: 500-900)
+  ✓ Yakıt maliyeti > 0
+  ✓ Toplam maliyet > 0
+  ✓ Path en az 3 node: 12
+
+Test 12: Toll breakdown segment tipi (köprü vs otoyol)
+  ✓ Toll breakdown dolu
+  ✓ Köprü segmenti var: Osmangazi Köprüsü
+
+==================================================
+Sonuç: 34 geçti, 0 kaldı
+
+=== Edge case tests ===
+
+Edge Case 1: Aynı ilçe (başlangıç = varış)
+  ✓ Mesafe ~0: 4.2
+  ✓ Geçiş ücreti yok
+
+Edge Case 2: Geçersiz ilçe ID
+  ✓ Geçersiz ilçe: doğru hata fırlatıldı — Başlangıç ilçesi bulunamadı: INVALID-DISTRICT
+
+Edge Case 3: Yakıt tüketimi 0
+  ✓ Yakıt maliyeti 0: 0
+  ✓ Yakıt litre 0: 0
+  ✓ Toplam = sadece geçiş ücreti
+
+Edge Case 4: Yakıt fiyatı 0
+  ✓ Yakıt maliyeti 0: 0
+  ✓ Geçiş ücreti hâlâ var: 1040
+  ✓ Toplam = sadece geçiş ücreti
+
+Edge Case 5: Komşu ilçeler (İstanbul Kadıköy → Üsküdar)
+  ✓ Kısa mesafe: 11.9 km
+  ✓ Toplam maliyet > 0
+
+Edge Case 6: Büyük yakıt tüketimi (25 L/100km)
+  ✓ Yüksek tüketim → daha pahalı: 3007 > 782
+  ✓ Mesafe aynı kalmalı
+
+Edge Case 7: Farklı araç sınıfları (1 vs 2)
+  ✓ 2. sınıf geçiş >= 1. sınıf: 1658 >= 1040
+
+Edge Case 8: Round trip hesaplaması tutarlılığı
+  ✓ RT mesafe = 2x: 967.4 = 967.4
+  ✓ RT geçiş = 2x: 186 = 186
+
+==================================================
+Edge Case Sonuç: 16 geçti, 0 kaldı
+
+=== MTV golden tests ===
+
+Golden Test 1: Benzin MTV — 1-1300cc
+  ✓ 1-1300cc, 1-3 yaş: 3950 TL
+  ✓ 1-1300cc, 4-6 yaş: 5200 TL
+  ✓ 1-1300cc, 7-11 yaş: 7100 TL
+  ✓ 1-1300cc, 12-15 yaş: 10200 TL
+  ✓ 1-1300cc, 16+ yaş: 15800 TL
+
+Golden Test 2: Benzin MTV — 1301-1600cc
+  ✓ 1301-1600cc, 1-3 yaş: 6900 TL
+  ✓ 1301-1600cc, 4-6 yaş: 9100 TL
+  ✓ 1301-1600cc, 16+ yaş: 27600 TL
+
+Golden Test 3: Elektrikli araç — MTV muaf
+  ✓ Elektrikli 1 yaş: 0 TL
+  ✓ Elektrikli 5 yaş: 0 TL
+  ✓ Elektrikli 20 yaş: 0 TL
+
+Golden Test 4: Hibrit araç
+  ✓ Hibrit 1800cc, 2 yaş: 4250 TL (> 0)
+  ✓ Hibrit (4250) < Benzin (8500)
+
+Golden Test 5: Detaylı MTV sonucu (benzin → yaklaşık)
+  ✓ Yıllık tutar (snapshot): 3950 TL
+  ✓ Aylık tutar: 329.1666666666667 TL
+  ✓ Benzinli confidence: yaklaşık (beklenen: yaklaşık)
+  ✓ Yaş grubu: 1-3
+  ✓ Tablo adı: Benzinli Araclar Tarifesi
+  ✓ Kaynak: GİB (Gelir İdaresi Başkanlığı) 2026 MTV Tebliği
+  ✓ sourceUrl dolu
+  ✓ effectiveDate dolu
+  ✓ Uyarı mevcut: Kesin tutar için GİB MTV Hesaplama aracını kullanı...
+
+Golden Test 5b: Elektrikli araç — confidence kesin (her zaman 0)
+  ✓ Elektrikli yıllık tutar = 0: 0 TL
+  ✓ Elektrikli confidence: kesin
+  ✓ Elektrikli sourceUrl mevcut
+  ✓ Elektrikli effectiveDate mevcut
+  ✓ Elektrikli araçta uyarı yok (kesin tutar)
+
+Golden Test 5c: Hibrit araç confidence (yaklaşık)
+  ✓ Hibrit tutar > 0: 4250
+  ✓ Hibrit confidence: yaklaşık (beklenen: yaklaşık)
+  ✓ Hibrit uyarı mevcut
+
+Golden Test 6: Input validasyonu
+  ✓ Geçerli input
+  ✓ Motor hacmi 0 (elektrikli değil) → hata
+  ✓ Elektrikli motor hacmi 0 → geçerli
+  ✓ Negatif yaş → hata
+  ✓ Geçersiz yakıt → hata
+
+==================================================
+MTV Golden Test Sonuç: 35 geçti, 0 kaldı
+
+=== Muayene golden tests (real 2026 values) ===
+
+Muayene Test 1: Sıfır km araç — muaf
+  ✓ 0 yaş: muaf = true
+  ✓ 0 yaş: yıllık maliyet = 0 TL
+  ✓ 0 yaş: periyot = 0 ay
+
+Muayene Test 2: 5 yaş otomobil — gerçek 2026 tarifesi (3.288 TL)
+  ✓ 5 yaş: muaf değil
+  ✓ 5 yaş: periyot = 24 ay (beklenen: 24)
+  ✓ 5 yaş benzinli otomobil tek ücret = 3748 TL (beklenen: 3.748 TL = 3.288 + 460 egzoz)
+  ✓ Güven: kesin
+
+Muayene Test 3: 10 yaş otomobil dizel — her yıl
+  ✓ 10 yaş: muaf değil
+  ✓ 10 yaş: periyot = 12 ay (beklenen: 12)
+  ✓ 10 yaş dizel otomobil tek ücret = 3748 TL (beklenen: 3.748 TL)
+  ✓ 10 yaş yıllık = 3748 TL
+
+Muayene Test 4: Elektrikli araç — sadece muayene 3.288 TL, egzoz yok
+  ✓ Elektrikli tek ücret = 3288 TL (beklenen: 3.288 TL — egzoz yok)
+  ✓ Benzinli tek ücret = 3748 TL (beklenen: 3.748 TL — egzoz dahil)
+  ✓ Fark = 460 TL (beklenen: 460 TL egzoz)
+
+Muayene Test 5: Geriye uyumluluk (calculateMuayeneMaliyeti)
+  ✓ Basit (3748) === Detaylı (3748)
+
+Muayene Test 5b: Otobüs (ağır vasıta) — 4.446 TL
+  ✓ Otobüs tek ücret = 4446 TL (beklenen: 4.446 TL)
+
+Muayene Test 5c: Motosiklet — 1.674 TL
+  ✓ Motosiklet tek ücret = 1674 TL (beklenen: 1.674 TL)
+
+Muayene Test 6: Metadata kontrolü
+  ✓ Güven: kesin
+  ✓ Kaynak: TÜVTÜRK 2026 Muayene Ücret Tarifesi
+  ✓ sourceUrl dolu: https://www.tuvturk.com.tr
+  ✓ effectiveDate dolu: 2026-01-01
+
+==================================================
+Muayene Golden Test Sonuç: 21 geçti, 0 kaldı
+
+=== Graf connectivity (3240 pairs) ===
+
+Graf Bağlantı Denetimi — 81 il merkezi
+
+Toplam çift: 3240
+Başarılı: 3240
+Başarısız: 0
+
+✓ Tüm il merkezleri birbirine bağlı — graf tam bağlantılı!
+
+=== SUMMARY ===
+TypeScript: 0 hata
+Lint: 0 hata
+Build: OK
+Total assertions: 106 + 3240 pairs
