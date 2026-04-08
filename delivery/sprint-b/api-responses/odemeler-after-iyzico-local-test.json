@@ -1,0 +1,26 @@
+{
+  "latest_odemeler": [
+    {
+      "id": 3,
+      "tutar": 99,
+      "durum": "beklemede",
+      "iyzico_conversation_id": "AKM-1775656823013",
+      "created_at": "2026-04-08T14:00:23.468449+00:00"
+    },
+    {
+      "id": 2,
+      "tutar": 99,
+      "durum": "beklemede",
+      "iyzico_conversation_id": "AKM-1775656675617",
+      "created_at": "2026-04-08T13:57:55.910016+00:00"
+    },
+    {
+      "id": 1,
+      "tutar": 99,
+      "durum": "beklemede",
+      "iyzico_conversation_id": "AKM-1775656637425",
+      "created_at": "2026-04-08T13:57:17.754694+00:00"
+    }
+  ],
+  "error": null
+}

@@ -1,0 +1,17 @@
+=== Sprint B — P8 Test 5/6/7 iyzico E2E ===
+Date: 2026-04-08T14:01:34Z
+
+--- LOCAL (npm run dev, port 3000, .env.local) ---
+{"error":"email hatalı format ile gönderilmiştir"}
+HTTP:500
+
+--- PRODUCTION (https://arac-karar-motoru.vercel.app) ---
+{"error":"Odeme baslatilamadi"}
+HTTP:500
+
+--- PROD /api/health.services.iyzico ---
+{
+  "reachable": null,
+  "mode": "sandbox"
+}
+paymentEnabled: {"enabled":true,"reason":"ok"}

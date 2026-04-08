@@ -1,0 +1,11 @@
+{
+  "has_alignmentWarning": true,
+  "alignmentWarning_length": 408,
+  "alignmentWarning_snippet": "Admin CRUD writes to Supabase tables that are NOT read by the public calculators. src/data/*.ts files are the authoritat...",
+  "calculationSource": "src_data_static_files",
+  "adminCrudTarget": "supabase_tables",
+  "supabase_tables_count": 11,
+  "srcDataFiles_populated_count": 5,
+  "srcDataFiles_total_count": 5,
+  "misalignment_proven": true
+}

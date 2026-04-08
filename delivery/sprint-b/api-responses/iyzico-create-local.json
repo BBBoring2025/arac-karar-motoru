@@ -1,0 +1,10 @@
+{
+  "http": 200,
+  "ok": true,
+  "token": "59e47e3c-eef3-49bc-8d75-008f594bc53e",
+  "orderId": 4,
+  "hasCheckoutFormContent": true,
+  "checkoutFormContentLength": 2860,
+  "firstChars": "<script type=\"text/javascript\">if (typeof iyziInit == 'undefined') {var iyziInit",
+  "isSandbox": true
+}

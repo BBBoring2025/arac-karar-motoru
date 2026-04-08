@@ -1,0 +1,36 @@
+{
+    "status": "ok",
+    "timestamp": "2026-04-08T13:51:02.631Z",
+    "flags": {
+        "paymentEnabled": {
+            "enabled": true,
+            "reason": "ok"
+        },
+        "adminWriteEnabled": {
+            "enabled": true,
+            "reason": "ok"
+        },
+        "analyticsEnabled": {
+            "enabled": false,
+            "reason": "unknown"
+        },
+        "routeV3Enabled": {
+            "enabled": true,
+            "reason": "ok"
+        },
+        "pdfEnabled": {
+            "enabled": true,
+            "reason": "ok"
+        }
+    },
+    "services": {
+        "supabase": {
+            "reachable": true,
+            "latencyMs": 459
+        },
+        "iyzico": {
+            "reachable": null,
+            "mode": "sandbox"
+        }
+    }
+}

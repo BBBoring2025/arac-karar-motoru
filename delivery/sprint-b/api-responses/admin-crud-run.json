@@ -1,0 +1,72 @@
+{
+  "step": "init",
+  "message": "Starting Sprint B admin seed + CRUD verification"
+}
+{
+  "step": "1-check-admin",
+  "message": "Checking existing admin user"
+}
+{
+  "step": "1-check-admin",
+  "found": true,
+  "id": "ee1a3d33-a8a5-4721-8c4e-b2067fe64443",
+  "email": "senalpserkan@gmail.com",
+  "rol": "admin"
+}
+{
+  "step": "2-seed-mtv",
+  "message": "Inserting test row into mtv_tarifeleri"
+}
+{
+  "step": "2-seed-mtv",
+  "success": true,
+  "id": 1,
+  "yillik_tutar": 9999.99,
+  "kaynak": "SPRINT_B_TEST_DO_NOT_USE",
+  "updated_by": "senalpserkan@gmail.com"
+}
+{
+  "step": "3-update-mtv",
+  "message": "Updating row 1 to verify write + audit path"
+}
+{
+  "step": "3-update-mtv",
+  "success": true,
+  "id": 1,
+  "new_yillik_tutar": 10101.01,
+  "updated_by": "senalpserkan@gmail.com"
+}
+{
+  "step": "4-verify-mtv",
+  "message": "Reading back updated row"
+}
+{
+  "step": "4-verify-mtv",
+  "success": true,
+  "id": 1,
+  "yillik_tutar": 10101.01,
+  "updated_by": "senalpserkan@gmail.com",
+  "isUpdated": true,
+  "auditPathWorks": true
+}
+{
+  "step": "5-cleanup-mtv",
+  "message": "Deleting test row"
+}
+{
+  "step": "5-cleanup-mtv",
+  "success": true
+}
+{
+  "step": "6-verify-cleanup",
+  "message": "Checking mtv_tarifeleri is empty again"
+}
+{
+  "step": "6-verify-cleanup",
+  "success": true,
+  "rowCount": 0
+}
+{
+  "step": "done",
+  "message": "Sprint B admin seed + CRUD verification complete"
+}

@@ -1,0 +1,48 @@
+{
+  "timeline": [
+    {
+      "step": 1,
+      "label": "before_seed",
+      "ts": "2026-04-08T13:55:24.663Z",
+      "http": 200,
+      "mtv_rowCount": 0,
+      "mtv_writable": true,
+      "alignmentWarning": "present"
+    },
+    {
+      "step": 2,
+      "action": "seed_ok",
+      "id": 2
+    },
+    {
+      "step": 3,
+      "label": "after_seed",
+      "ts": "2026-04-08T13:55:25.885Z",
+      "http": 200,
+      "mtv_rowCount": 1,
+      "mtv_writable": true,
+      "alignmentWarning": "present"
+    },
+    {
+      "step": 4,
+      "action": "delete_ok"
+    },
+    {
+      "step": 5,
+      "label": "after_cleanup",
+      "ts": "2026-04-08T13:55:27.115Z",
+      "http": 200,
+      "mtv_rowCount": 0,
+      "mtv_writable": true,
+      "alignmentWarning": "present"
+    }
+  ],
+  "proof": {
+    "passed": true,
+    "beforeCount": 0,
+    "afterSeedCount": 1,
+    "afterCleanupCount": 0,
+    "productionReflectsWrites": true,
+    "productionReflectsDeletes": true
+  }
+}

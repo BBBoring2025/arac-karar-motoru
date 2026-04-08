@@ -1,0 +1,25 @@
+=== Sprint B — P8 Test 8 Analytics HTML Scan ===
+Date: 2026-04-08T14:04:42Z
+URL: https://arac-karar-motoru.vercel.app/
+HTML bytes:    48594
+
+Pattern counts:
+  gtag / googletagmanager / google-analytics: 0
+0
+  plausible:                                  0
+0
+  posthog:                                    0
+0
+  umami:                                      0
+0
+  mixpanel:                                   0
+0
+  segment:                                    0
+0
+
+First 5 <script> tags (expected: all /_next/static/ internal bundles):
+<script src="/_next/static/chunks/0pqt~8bl3ukh4.js" async=""
+<script src="/_next/static/chunks/05pmm04_33gs1.js" async=""
+<script src="/_next/static/chunks/0t1j~no9qk432.js" async=""
+<script src="/_next/static/chunks/turbopack-0s5q-ub3b31b-.js" async=""
+<script src="/_next/static/chunks/13u7td6mrlm94.js" async=""

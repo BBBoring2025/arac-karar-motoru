@@ -1,0 +1,117 @@
+{
+    "timestamp": "2026-04-08T13:51:03.768Z",
+    "calculationSource": "src_data_static_files",
+    "adminCrudTarget": "supabase_tables",
+    "alignmentWarning": "Admin CRUD writes to Supabase tables that are NOT read by the public calculators. src/data/*.ts files are the authoritative source for all /araclar/* calculation pages. Editing Supabase mtv_tarifeleri / muayene_ucretleri / otoyol_ucretleri has ZERO effect on user-visible calculations. This misalignment is tracked in docs/data-source-truth.md and is a known tech debt. See docs/runtime-status.md for status.",
+    "supabase": {
+        "reachable": true,
+        "tables": [
+            {
+                "name": "mtv_tarifeleri",
+                "rowCount": 0,
+                "rlsEnabled": null,
+                "writable": true
+            },
+            {
+                "name": "muayene_ucretleri",
+                "rowCount": 0,
+                "rlsEnabled": null,
+                "writable": true
+            },
+            {
+                "name": "otoyol_ucretleri",
+                "rowCount": 0,
+                "rlsEnabled": null,
+                "writable": true
+            },
+            {
+                "name": "yakit_fiyatlari",
+                "rowCount": 0,
+                "rlsEnabled": null,
+                "writable": true
+            },
+            {
+                "name": "araclar",
+                "rowCount": 0,
+                "rlsEnabled": null,
+                "writable": true
+            },
+            {
+                "name": "amortisman_oranlari",
+                "rowCount": 0,
+                "rlsEnabled": null,
+                "writable": true
+            },
+            {
+                "name": "bakim_benchmark",
+                "rowCount": 0,
+                "rlsEnabled": null,
+                "writable": true
+            },
+            {
+                "name": "noter_ucretleri",
+                "rowCount": 0,
+                "rlsEnabled": null,
+                "writable": true
+            },
+            {
+                "name": "kullanicilar",
+                "rowCount": null,
+                "rlsEnabled": null,
+                "writable": true,
+                "error": "query_error"
+            },
+            {
+                "name": "raporlar",
+                "rowCount": null,
+                "rlsEnabled": null,
+                "writable": true,
+                "error": "query_error"
+            },
+            {
+                "name": "odemeler",
+                "rowCount": null,
+                "rlsEnabled": null,
+                "writable": true,
+                "error": "query_error"
+            }
+        ]
+    },
+    "srcDataFiles": {
+        "mtv": {
+            "path": "src/data/mtv.ts",
+            "populated": true,
+            "itemCount": 32,
+            "snapshotOf": "G\u0130B 2026 MTV snapshot (confidence: yakla\u015f\u0131k, see docs/runtime-status.md)",
+            "effectiveDate": "2026-01-01"
+        },
+        "muayene": {
+            "path": "src/data/muayene.ts",
+            "populated": true,
+            "itemCount": 8,
+            "snapshotOf": "T\u00dcVT\u00dcRK 2026 verified (confidence: kesin, 3.288/4.446/1.674 TL + 460 egzoz)",
+            "effectiveDate": "2026-01-01"
+        },
+        "yakit": {
+            "path": "src/data/yakit.ts",
+            "populated": true,
+            "itemCount": 4,
+            "snapshotOf": "PETDER 2026 snapshot (confidence: yakla\u015f\u0131k)",
+            "effectiveDate": "2026-01-15"
+        },
+        "araclar": {
+            "path": "src/data/araclar.ts",
+            "populated": true,
+            "itemCount": 161,
+            "snapshotOf": "161 vehicles from OYDER + manufacturer data (confidence: y\u00fcksek)",
+            "effectiveDate": "2026-04-05"
+        },
+        "otoyol": {
+            "path": "src/data/otoyol.ts",
+            "populated": true,
+            "itemCount": 13,
+            "snapshotOf": "KGM 2026 bridges verified (confidence: kesin), highway segments estimated (confidence: tahmini)",
+            "effectiveDate": "2026-01-01"
+        }
+    }
+}
