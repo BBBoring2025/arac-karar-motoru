@@ -135,3 +135,41 @@ export function isCallbackLanding(state: PaymentState): boolean {
     state.name === 'callback_error'
   );
 }
+
+/* ----------------------------------------------------------------------
+ * Sprint C P2 — getPaymentMode() helper
+ *
+ * The 6 internal PaymentStateName values model two separate things:
+ *  - 3 base states (disabled_no_env, ready_sandbox, ready_production)
+ *  - 3 callback states (payment_success, payment_failed, callback_error)
+ *
+ * Sprint C introduces a 3-mode external label that ignores callback state
+ * and only describes "what's enabled today". Used by /api/health.paymentMode
+ * and the /odeme sandbox banner.
+ *
+ * Internal 6 states are kept untouched for back-compat with /odeme page
+ * post-callback rendering.
+ * --------------------------------------------------------------------- */
+
+export type PaymentMode = 'paymentDisabled' | 'paymentSandbox' | 'paymentLive';
+
+export interface PaymentModeInputs {
+  paymentEnabled: boolean;
+  iyzicoMode?: string | null;
+}
+
+/**
+ * Map (paymentEnabled, iyzicoMode) to one of 3 honest payment modes.
+ * - paymentDisabled: env vars missing or iyzico mode unknown
+ * - paymentSandbox: env set, iyzico in sandbox mode (test only, no real money)
+ * - paymentLive: env set, iyzico in production mode (real charges)
+ *
+ * NOTE: Sprint C only gets sandbox closure to work. Live mode is reserved
+ * for a future sprint that includes a real merchant agreement.
+ */
+export function getPaymentMode(inputs: PaymentModeInputs): PaymentMode {
+  if (!inputs.paymentEnabled) return 'paymentDisabled';
+  if (inputs.iyzicoMode === 'sandbox') return 'paymentSandbox';
+  if (inputs.iyzicoMode === 'production') return 'paymentLive';
+  return 'paymentDisabled';
+}

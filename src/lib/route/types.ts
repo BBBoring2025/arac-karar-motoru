@@ -73,6 +73,24 @@ export interface TollBreakdownItem {
   name: string;
   type: string;
   amount: number;
+  // Sprint C P8: source tracking (additive — existing tests treat optional fields as opaque)
+  confidence?: ConfidenceLevel;
+  sourceLabel?: string;
+  sourceUrl?: string;
+}
+
+/**
+ * Sprint C P8: Source tracking enums for RouteResult provenance.
+ * Each enum captures where a particular cost component's data came from
+ * so the UI can label exact-vs-approximate at line-item level.
+ */
+export type PathDistanceSource = 'graph' | 'haversine_offset' | 'mixed';
+export type TollSource = 'kgm_official' | 'estimated_segment' | 'mixed' | 'none';
+export type FuelPriceSource = 'user_input' | 'reference_country' | 'reference_city';
+
+export interface DistrictOffsetSource {
+  type: 'haversine_multiplier';
+  multiplier: number;
 }
 
 export interface RouteResult {
@@ -110,6 +128,12 @@ export interface RouteResult {
     fuelType: string;
     vehicleClass: string;
   };
+  // Sprint C P8: Source tracking fields (optional — populated by P9 engine,
+  // older consumers can ignore them; existing tests do not read them).
+  pathDistanceSource?: PathDistanceSource;
+  tollSource?: TollSource;
+  districtOffsetSource?: DistrictOffsetSource;
+  fuelPriceSource?: FuelPriceSource;
 }
 
 export interface RouteParams {
@@ -121,4 +145,7 @@ export interface RouteParams {
   fuelType: string;
   includeTolls: boolean;
   roundTrip: boolean;
+  // Sprint C P8: Optional fuel price provenance hint passed by the form.
+  // Defaults to 'user_input' when omitted (matches existing behavior).
+  fuelPriceSource?: FuelPriceSource;
 }

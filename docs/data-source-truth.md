@@ -185,3 +185,59 @@ contains the timeline output of step 2.
 
 **✅ Misalignment surfaced, documented, and remediation plan written.**
 **❌ Misalignment NOT fixed in Sprint B** (intentionally out of scope).
+
+---
+
+## Sprint C Update — ADR-001 Accepted
+
+**Date**: 2026-04-08
+**Decision**: **Path A** (`src/data` as binding source of truth) accepted in
+[ADR-001](./adr/0001-src-data-as-source-of-truth.md). Path B (Supabase as
+source) deferred to Sprint D.
+
+### What changed in Sprint C
+
+1. **`docs/adr/0001-src-data-as-source-of-truth.md` written and accepted**
+   — binding decision with full reversibility plan.
+2. **Admin tarife tabs hidden** in `src/app/admin/page.tsx`. The
+   `'mtv' | 'muayene' | 'otoyol'` tabs no longer appear in the admin UI.
+   The `araclar` tab stays visible (already aligned, read-only).
+3. **`/api/admin/tarifeleri` route deprecated** with `X-See-ADR` header
+   and `console.warn` on every call. Sprint B's regression script
+   (`scripts/sprint-b-crud-prod-sync.mjs`) still passes — the route's
+   functionality is preserved for back-compat, just marked deprecated.
+4. **`docs/data-update-runbook.md` written** — one section per data type,
+   with the explicit "edit src/data → PR → Vercel rebuild" workflow.
+5. **`src/lib/data-manifest.ts` created** — single typed export of all 8
+   data type metadata. Consumers (admin UI, public footer, /api/data-status)
+   read from the manifest instead of crawling individual data files.
+6. **`/api/data-status.activeSource` field added** with value
+   `'src_data_static_files'`. The endpoint also exposes `adrReference`
+   pointing to ADR-001.
+7. **Public calculator pages got a `<DataSourceFooter>` component** that
+   shows source label, effective date, last updated, and confidence
+   badge. Backed by the manifest.
+
+### What "Path C in Sprint B+1" used to mean (now obsolete)
+
+The original Sprint B doc suggested "Path C immediate (Sprint B+1)" =
+hide tarife tabs as a temporary mitigation. Sprint C executed this
+directly via ADR-001 and made it permanent. Sprint B+1 as a separate
+sprint never existed.
+
+### When will Sprint D revisit this?
+
+Sprint D may write `0002-supabase-tariff-source.md` to flip back to
+Path B if:
+- Live tariff edits become a business requirement
+- Multiple admin users need to coordinate updates
+- A drift detection system is needed between the two stores
+
+The cost estimate is ~4 days (see ADR-001 §Reversibility).
+
+### Cross-references
+
+- [ADR-001](./adr/0001-src-data-as-source-of-truth.md) — the binding decision
+- [data-update-runbook.md](./data-update-runbook.md) — the editorial workflow
+- `delivery/sprint-c/adr-0001-src-data.md` — copy in delivery package
+- `delivery/sprint-c/sprint-end-questions.md` Q5 — answers "which data layer is the source of truth"

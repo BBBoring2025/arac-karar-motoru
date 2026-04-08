@@ -21,7 +21,9 @@ import {
   derivePaymentState,
   isCheckoutActive,
   isCallbackLanding,
+  getPaymentMode,
   type PaymentState,
+  type PaymentMode,
 } from '@/lib/payment/state-machine';
 
 /** Step indicator at the top of the flow */
@@ -543,6 +545,9 @@ function OdemeContent() {
   // Payment state derived from /api/health + callback query params.
   // Null until /api/health fetch completes.
   const [paymentState, setPaymentState] = useState<PaymentState | null>(null);
+  // Sprint C P3: payment mode (paymentDisabled | paymentSandbox | paymentLive)
+  // — separate axis from PaymentState. Used by the sandbox banner.
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>('paymentDisabled');
 
   // Fetch /api/health to determine payment state (Sprint B: state machine wiring)
   useEffect(() => {
@@ -568,14 +573,24 @@ function OdemeContent() {
         if (!res.ok) throw new Error('health_fetch_failed');
         const health = await res.json();
 
+        const flagEnabled = health?.flags?.paymentEnabled?.enabled === true;
+        const iyzicoMode = health?.services?.iyzico?.mode ?? null;
+
         const state = derivePaymentState({
-          paymentEnabled: health?.flags?.paymentEnabled?.enabled === true,
-          iyzicoMode: health?.services?.iyzico?.mode ?? null,
+          paymentEnabled: flagEnabled,
+          iyzicoMode,
           callbackStatus: null,
           callbackMessage: null,
           paymentId: null,
         });
-        if (!cancelled) setPaymentState(state);
+        const mode = getPaymentMode({
+          paymentEnabled: flagEnabled,
+          iyzicoMode,
+        });
+        if (!cancelled) {
+          setPaymentState(state);
+          setPaymentMode(mode);
+        }
       } catch {
         // Fallback: if /api/health fails, treat as disabled_no_env (safe default)
         if (!cancelled) {
@@ -588,6 +603,7 @@ function OdemeContent() {
               paymentId: null,
             }),
           );
+          setPaymentMode('paymentDisabled');
         }
       }
     }
@@ -621,6 +637,28 @@ function OdemeContent() {
   // Payment flow (ready_sandbox or ready_production)
   return (
     <>
+      {/* Sprint C P3: sandbox disclosure banner */}
+      {paymentMode === 'paymentSandbox' && (
+        <div
+          className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-amber-200"
+          role="note"
+          aria-label="Test ödeme uyarısı"
+        >
+          <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-300" />
+          <div className="text-sm leading-relaxed">
+            <p className="font-semibold text-amber-100">
+              Bu test/sandbox işlemdir, gerçek para çekilmez.
+            </p>
+            <p className="mt-1 text-amber-200/90">
+              iyzico sandbox modunda test kart numaralarıyla çalışıyoruz.
+              Başarılı test için: <code className="font-mono">5528790000000008</code>,
+              başarısız için: <code className="font-mono">4111111111111129</code>.
+              Detay: <code>docs/payment-modes.md</code>.
+            </p>
+          </div>
+        </div>
+      )}
+
       <StepIndicator current={step} />
 
       {step === 1 && (
@@ -651,10 +689,12 @@ function OdemeContent() {
         />
       )}
 
-      {/* Dev-only state indicator */}
+      {/* Dev-only state indicator (Sprint B + C: shows mode + state) */}
       {process.env.NODE_ENV !== 'production' && (
         <div className="mt-8 text-center text-xs text-gray-600">
-          <code>state: {paymentState.name}</code>
+          <code>
+            mode: {paymentMode} | state: {paymentState.name}
+          </code>
         </div>
       )}
     </>

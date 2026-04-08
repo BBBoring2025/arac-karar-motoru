@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { initializeCheckoutForm } from '@/lib/payment/processor';
 import { getProduct } from '@/lib/payment/products';
 import { createAdminClient } from '@/lib/supabase';
+import {
+  getCallbackBaseUrl,
+  MissingCallbackBaseUrlError,
+} from '@/lib/payment/callback-url';
+
+// Sprint C P3: ensure this route runs on the Node.js runtime so that
+// iyzipay's CommonJS module loads correctly.
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,10 +34,27 @@ export async function POST(request: NextRequest) {
     // Generate conversation ID
     const conversationId = `AKM-${Date.now()}`;
 
-    // Determine callback URL
-    const baseUrl =
-      process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const callbackUrl = `${baseUrl}/api/payment/callback`;
+    // Sprint C P3: callback URL via centralized helper.
+    // - NEXT_PUBLIC_SITE_URL → VERCEL_URL → localhost (dev only) → throws in prod
+    // - Returns a clear MISSING_CALLBACK_BASE_URL error code instead of letting
+    //   the iyzipay SDK silently swallow a bad localhost callback.
+    let callbackUrl: string;
+    try {
+      callbackUrl = `${getCallbackBaseUrl()}/api/payment/callback`;
+    } catch (urlErr) {
+      if (urlErr instanceof MissingCallbackBaseUrlError) {
+        console.error('[Payment] callback base url missing:', urlErr.code);
+        return NextResponse.json(
+          {
+            error: 'callback_base_url_missing',
+            code: 'MISSING_CALLBACK_BASE_URL',
+            hint: 'Set NEXT_PUBLIC_SITE_URL in Vercel Production env or rely on VERCEL_URL.',
+          },
+          { status: 500 }
+        );
+      }
+      throw urlErr;
+    }
 
     // Create order in DB
     let orderId: string | null = null;
