@@ -13,13 +13,23 @@
  * 8. Gidiş-dönüş ise maliyetleri 2x yap
  */
 
-import { RouteParams, RouteResult, RouteEdge, ConfidenceLevel } from './types';
+import {
+  RouteParams,
+  RouteResult,
+  RouteEdge,
+  ConfidenceLevel,
+  PathDistanceSource,
+  TollSource,
+  DistrictOffsetSource,
+  FuelPriceSource,
+} from './types';
 import { findDistrict } from '@/data/locations/districts';
 import { findAnchor } from '@/data/locations/anchors';
 import { routeEdges } from '@/data/routes/graph';
 import { calculateDistrictOffset } from './district-offset';
 import { dijkstra } from './graph-search';
 import { calculateTollCost } from './toll-calculator';
+import { tollSegments } from '@/data/routes/toll-segments';
 
 /**
  * İlçeden ilçeye rota hesaplar
@@ -120,6 +130,19 @@ export function calculateRoute(params: RouteParams): RouteResult {
   // 9. Güven seviyesi
   const confidence = determineConfidence(pathEdges);
 
+  // 9.5 Sprint C P9: source tracking for provenance UI
+  const tollSource = derivePathTollSource(pathEdges);
+  const pathDistanceSource = derivePathDistanceSource(
+    startOffset.distanceKm + endOffset.distanceKm,
+    graphDistanceKm
+  );
+  const districtOffsetSource: DistrictOffsetSource = {
+    type: 'haversine_multiplier',
+    multiplier: Math.max(startOffset.multiplier, endOffset.multiplier),
+  };
+  const fuelPriceSource: FuelPriceSource =
+    params.fuelPriceSource ?? 'user_input';
+
   // 10. Sonuç
   const oneWay = {
     distanceKm: round2(totalDistanceKm),
@@ -160,7 +183,58 @@ export function calculateRoute(params: RouteParams): RouteResult {
       fuelType,
       vehicleClass,
     },
+    // Sprint C P9: source tracking
+    pathDistanceSource,
+    tollSource,
+    districtOffsetSource,
+    fuelPriceSource,
   };
+}
+
+/**
+ * Sprint C P9: derive overall toll source from the route's segments.
+ * - 'none'              → no toll segments at all
+ * - 'kgm_official'      → all segments confidence === 'kesin' (KGM verified)
+ * - 'estimated_segment' → all segments confidence === 'tahmini'
+ * - 'mixed'             → both kesin and tahmini segments present
+ */
+function derivePathTollSource(edges: RouteEdge[]): TollSource {
+  const segmentIds = new Set<string>();
+  for (const edge of edges) {
+    for (const id of edge.tollSegmentIds) {
+      segmentIds.add(id);
+    }
+  }
+  if (segmentIds.size === 0) return 'none';
+
+  let hasKesin = false;
+  let hasTahmini = false;
+  for (const id of segmentIds) {
+    const seg = tollSegments.find((s) => s.id === id);
+    if (!seg) continue;
+    if (seg.confidence === 'kesin') hasKesin = true;
+    else if (seg.confidence === 'tahmini') hasTahmini = true;
+  }
+
+  if (hasKesin && hasTahmini) return 'mixed';
+  if (hasKesin) return 'kgm_official';
+  if (hasTahmini) return 'estimated_segment';
+  return 'mixed';
+}
+
+/**
+ * Sprint C P9: derive how the total distance was computed.
+ * - 'haversine_offset' → only district offsets (same anchor, no graph traversal)
+ * - 'graph'            → only graph traversal (zero district offset, theoretical)
+ * - 'mixed'            → both contributions present (typical)
+ */
+function derivePathDistanceSource(
+  totalOffsetKm: number,
+  graphKm: number
+): PathDistanceSource {
+  if (totalOffsetKm > 0 && graphKm > 0) return 'mixed';
+  if (graphKm > 0) return 'graph';
+  return 'haversine_offset';
 }
 
 /**

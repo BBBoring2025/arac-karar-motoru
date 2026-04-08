@@ -18,12 +18,22 @@ const FUEL_TYPE_LABELS: Record<string, string> = {
 };
 
 export default function FuelCostCard({ result, showRoundTrip }: Props) {
-  const { oneWay, roundTrip, metadata } = result;
+  const { oneWay, roundTrip, metadata, fuelPriceSource } = result;
 
   const fuelTypeLabel = FUEL_TYPE_LABELS[metadata.fuelType] ?? metadata.fuelType;
   const isElektrik = metadata.fuelType === 'elektrik';
   const unit = isElektrik ? 'kWh' : 'L';
   const priceLabel = `₺${metadata.fuelPrice}/${unit}`;
+
+  // Sprint C P10: fuel price source label
+  const sourceSubtitle =
+    fuelPriceSource === 'user_input'
+      ? 'Sizin fiyatınız'
+      : fuelPriceSource === 'reference_country'
+      ? 'Referans (PETDER ortalaması)'
+      : fuelPriceSource === 'reference_city'
+      ? 'Referans (şehir bazlı)'
+      : null;
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
@@ -50,6 +60,18 @@ export default function FuelCostCard({ result, showRoundTrip }: Props) {
             {priceLabel}{' '}
             <span className="text-xs font-normal text-slate-500">({fuelTypeLabel})</span>
           </p>
+          {/* Sprint C P10: Sizin fiyatınız vs Referans subtitle */}
+          {sourceSubtitle && (
+            <p
+              className={`mt-1 text-[11px] font-medium ${
+                fuelPriceSource === 'user_input'
+                  ? 'text-orange-600'
+                  : 'text-slate-500'
+              }`}
+            >
+              {sourceSubtitle}
+            </p>
+          )}
         </div>
 
         {/* Tüketim */}

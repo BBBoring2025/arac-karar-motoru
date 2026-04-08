@@ -7,6 +7,7 @@ import Select from '@/components/ui/Select';
 import { Zap, Info } from 'lucide-react';
 import { inspectionData } from '@/data/muayene';
 import ConfidenceBadge from '@/components/ui/ConfidenceBadge';
+import DataSourceFooter from '@/components/ui/DataSourceFooter';
 
 export default function MuayeneUcreti() {
   const [selectedVehicleType, setSelectedVehicleType] = useState('otomobil');
@@ -156,11 +157,8 @@ export default function MuayeneUcreti() {
           </div>
         </Card>
 
-        {/* Güncellik İbaresi */}
-        <div className="text-center text-xs text-gray-500 py-3 border-t border-gray-200">
-          <p>Kaynak: {inspectionData.sourceLabel} | Tarife tarihi: {inspectionData.effectiveDate}</p>
-          <p className="mt-1">Veriler {inspectionData.lastUpdated} itibarıyla günceldir.</p>
-        </div>
+        {/* Sprint C P7: data manifest footer */}
+        <DataSourceFooter manifestKey="muayene" />
 
         <Card variant="highlighted" className="cursor-pointer hover:shadow-lg">
           <p className="text-center text-slate-900 mb-3 font-medium">Daha detaylı analiz için</p>

@@ -2,7 +2,7 @@
 
 import { RouteResult } from '@/lib/route/types';
 import { formatCurrency } from '@/lib/route/formatters';
-import { Route } from 'lucide-react';
+import { Route, ExternalLink } from 'lucide-react';
 
 interface Props {
   result: RouteResult;
@@ -62,14 +62,44 @@ export default function TollBreakdownCard({ result, showRoundTrip }: Props) {
                 const badgeColor =
                   TYPE_BADGE_COLORS[toll.type] ?? 'bg-gray-50 text-gray-700 border-gray-200';
 
+                // Sprint C P10: per-line confidence badge
+                const confColor =
+                  toll.confidence === 'kesin'
+                    ? 'bg-green-50 text-green-700 border-green-200'
+                    : toll.confidence === 'tahmini'
+                    ? 'bg-orange-50 text-orange-700 border-orange-200'
+                    : 'bg-gray-50 text-gray-700 border-gray-200';
+
                 return (
                   <div
                     key={toll.segmentId}
                     className="grid grid-cols-[1fr_auto_auto] gap-x-3 items-center py-2.5"
                   >
-                    <span className="font-medium text-slate-800 truncate">
-                      {icon} {toll.name}
-                    </span>
+                    <div className="min-w-0">
+                      {toll.sourceUrl ? (
+                        <a
+                          href={toll.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-slate-800 hover:text-orange-600 truncate inline-flex items-center gap-1"
+                          title={toll.sourceLabel}
+                        >
+                          {icon} {toll.name}
+                          <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                        </a>
+                      ) : (
+                        <span className="font-medium text-slate-800 truncate">
+                          {icon} {toll.name}
+                        </span>
+                      )}
+                      {toll.confidence && (
+                        <span
+                          className={`ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${confColor}`}
+                        >
+                          {toll.confidence}
+                        </span>
+                      )}
+                    </div>
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${badgeColor}`}
                     >

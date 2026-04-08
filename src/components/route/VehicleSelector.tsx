@@ -16,6 +16,8 @@ interface VehicleData {
   fuelConsumption: number;
   fuelPrice: number;
   vehicleLabel?: string;
+  // Sprint C P11: provenance for the route engine + UI labels
+  fuelPriceSource: 'user_input' | 'reference_country' | 'reference_city';
 }
 
 interface VehicleSelectorProps {
@@ -46,6 +48,8 @@ export default function VehicleSelector({ onVehicleChange }: VehicleSelectorProp
   const [manuelFuelType, setManuelFuelType] = useState('benzin');
   const [manuelConsumption, setManuelConsumption] = useState(7.5);
   const [manuelPrice, setManuelPrice] = useState(getDefaultFuelPrice('benzin'));
+  // Sprint C P11: track whether user has overridden the auto-filled price
+  const [priceOverridden, setPriceOverridden] = useState(false);
 
   const brandOptions: ComboboxOption[] = useMemo(() => {
     const brands = [...new Set(vehicleDatabase.vehicles.map((v) => v.brand))].sort(
@@ -76,11 +80,13 @@ export default function VehicleSelector({ onVehicleChange }: VehicleSelectorProp
       const vehicle = vehicleDatabase.vehicles.find((v) => v.id === vehicleId);
       if (vehicle) {
         const price = getDefaultFuelPrice(vehicle.fuelType);
+        // Sprint C P11: araç tab'ında fiyat reference_country (PETDER)
         onVehicleChange({
           fuelType: vehicle.fuelType,
           fuelConsumption: vehicle.avgConsumption,
           fuelPrice: price,
           vehicleLabel: vehicle.displayName,
+          fuelPriceSource: 'reference_country',
         });
       }
     },
@@ -92,18 +98,25 @@ export default function VehicleSelector({ onVehicleChange }: VehicleSelectorProp
       let newFuelType = manuelFuelType;
       let newConsumption = manuelConsumption;
       let newPrice = manuelPrice;
+      let newOverride = priceOverridden;
 
       if (field === 'fuelType') {
         newFuelType = value as string;
         newPrice = getDefaultFuelPrice(newFuelType);
         setManuelFuelType(newFuelType);
         setManuelPrice(newPrice);
+        // Yakıt tipi değişince reference fiyat doluyor → override sıfırlanır
+        newOverride = false;
+        setPriceOverridden(false);
       } else if (field === 'consumption') {
         newConsumption = Number(value);
         setManuelConsumption(newConsumption);
       } else if (field === 'price') {
         newPrice = Number(value);
         setManuelPrice(newPrice);
+        // Sprint C P11: kullanıcı fiyatı manuel girdi → override aktif
+        newOverride = true;
+        setPriceOverridden(true);
       }
 
       onVehicleChange({
@@ -111,9 +124,10 @@ export default function VehicleSelector({ onVehicleChange }: VehicleSelectorProp
         fuelConsumption: field === 'consumption' ? Number(value) : newConsumption,
         fuelPrice: field === 'price' ? Number(value) : newPrice,
         vehicleLabel: 'Manuel',
+        fuelPriceSource: newOverride ? 'user_input' : 'reference_country',
       });
     },
-    [manuelFuelType, manuelConsumption, manuelPrice, onVehicleChange]
+    [manuelFuelType, manuelConsumption, manuelPrice, priceOverridden, onVehicleChange]
   );
 
   return (
@@ -195,6 +209,16 @@ export default function VehicleSelector({ onVehicleChange }: VehicleSelectorProp
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Fiyat (TL/{manuelFuelType === 'elektrik' ? 'kWh' : 'L'})
+              {/* Sprint C P11: source label */}
+              {priceOverridden ? (
+                <span className="ml-1 inline-block text-[10px] font-semibold text-orange-600">
+                  · Sizin fiyatınız
+                </span>
+              ) : (
+                <span className="ml-1 inline-block text-[10px] text-slate-500">
+                  · Referans (PETDER)
+                </span>
+              )}
             </label>
             <input
               type="number"
@@ -202,7 +226,11 @@ export default function VehicleSelector({ onVehicleChange }: VehicleSelectorProp
               min="0.01"
               value={manuelPrice}
               onChange={(e) => handleManuelChange('price', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className={`w-full border rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                priceOverridden
+                  ? 'border-orange-300 bg-orange-50/30'
+                  : 'border-gray-300'
+              }`}
             />
           </div>
         </div>

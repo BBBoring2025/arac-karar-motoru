@@ -45,6 +45,10 @@ export function calculateTollCost(
             name: segment.name,
             type: segment.type,
             amount: fee,
+            // Sprint C P9: per-line provenance for route UI badges
+            confidence: segment.confidence,
+            sourceLabel: segment.sourceLabel,
+            sourceUrl: segment.sourceUrl,
           });
         }
       }

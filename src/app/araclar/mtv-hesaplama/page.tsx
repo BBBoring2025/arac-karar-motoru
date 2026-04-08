@@ -7,6 +7,7 @@ import Select from '@/components/ui/Select';
 import { Zap, Info } from 'lucide-react';
 import { mtvData } from '@/data/mtv';
 import ConfidenceBadge from '@/components/ui/ConfidenceBadge';
+import DataSourceFooter from '@/components/ui/DataSourceFooter';
 
 const engineSizes = ['1-1300cc', '1301-1600cc', '1601-1800cc', '1801-2000cc', '2001-2500cc', '2501-3000cc', '3001-3500cc', '3501-4000cc', '4001cc+'];
 const fuelTypes = ['Benzin', 'Dizel', 'LPG', 'Hibrit', 'Elektrik'];
@@ -193,11 +194,8 @@ export default function MTVHesaplama() {
           </div>
         </Card>
 
-        {/* Güncellik İbaresi */}
-        <div className="text-center text-xs text-gray-500 py-3 border-t border-gray-200">
-          <p>Kaynak: {mtvData.sourceLabel} | Tarife tarihi: {mtvData.effectiveDate}</p>
-          <p className="mt-1">Veriler {mtvData.lastUpdated} itibarıyla günceldir.</p>
-        </div>
+        {/* Sprint C P7: data manifest footer */}
+        <DataSourceFooter manifestKey="mtv" />
 
         <Card variant="highlighted" className="cursor-pointer hover:shadow-lg">
           <p className="text-center text-slate-900 mb-3 font-medium">Daha detaylı analiz için</p>

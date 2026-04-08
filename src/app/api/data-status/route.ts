@@ -21,6 +21,8 @@ import { inspectionData } from '@/data/muayene';
 import { fuelData } from '@/data/yakit';
 import { vehicleDatabase } from '@/data/araclar';
 import { tollData } from '@/data/otoyol';
+// Sprint C P12: data manifest is the canonical metadata source
+import { getAllManifestEntries } from '@/lib/data-manifest';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,8 +43,24 @@ interface SrcDataStatus {
   effectiveDate?: string;
 }
 
+interface ManifestSummary {
+  key: string;
+  label: string;
+  filePath: string;
+  sourceLabel: string;
+  sourceUrl: string;
+  effectiveDate: string;
+  lastUpdated: string;
+  confidence: string;
+  itemCount: number;
+}
+
 interface DataStatusResponse {
   timestamp: string;
+  // Sprint C P12: explicit binding decision (was implied)
+  activeSource: 'src_data_static_files';
+  adrReference: string;
+  precedence: string[];
   calculationSource: 'src_data_static_files';
   adminCrudTarget: 'supabase_tables';
   alignmentWarning: string;
@@ -52,14 +70,27 @@ interface DataStatusResponse {
     error?: string;
   };
   srcDataFiles: Record<string, SrcDataStatus>;
+  // Sprint C P12: manifest summary (single source for admin UI + footer)
+  manifest: ManifestSummary[];
 }
 
+// Sprint C ADR-001 binding: src/data is the source of truth.
+// Sprint B's "remediation in B+1" wording is replaced with the ADR reference.
 const ALIGNMENT_WARNING =
-  'Admin CRUD writes to Supabase tables that are NOT read by the public calculators. ' +
-  'src/data/*.ts files are the authoritative source for all /araclar/* calculation pages. ' +
-  'Editing Supabase mtv_tarifeleri / muayene_ucretleri / otoyol_ucretleri has ZERO effect on ' +
-  'user-visible calculations. This misalignment is tracked in docs/data-source-truth.md ' +
-  'and is a known tech debt. See docs/runtime-status.md for status.';
+  'ADR-001 (accepted Sprint C, 2026-04-08): src/data/*.ts is the binding ' +
+  'source of truth for all tariff calculations. The /api/admin/tarifeleri ' +
+  'endpoint still accepts writes to Supabase tarife tables (kept for the ' +
+  'Sprint B regression script), but those writes have ZERO effect on the ' +
+  'user-visible calculators. The MTV / muayene / otoyol / yakıt admin tabs ' +
+  'have been hidden in Sprint C P6. See docs/adr/0001-src-data-as-source-of-truth.md ' +
+  'and docs/data-update-runbook.md for the editorial workflow.';
+
+const ADR_REFERENCE = 'docs/adr/0001-src-data-as-source-of-truth.md';
+
+const PRECEDENCE = [
+  'src/data/*.ts (binding)',
+  '(supabase tarife tables ignored — see ADR-001)',
+];
 
 const TRACKED_TABLES = [
   'mtv_tarifeleri',
@@ -163,8 +194,27 @@ export async function GET() {
     // Check if any supabase query succeeded to determine overall reachability
     const anyReachable = tables.some((t) => t.rowCount !== null);
 
+    // Sprint C P12: build manifest summary from data-manifest.ts
+    const manifestSummary: ManifestSummary[] = getAllManifestEntries().map(
+      (entry) => ({
+        key: entry.key,
+        label: entry.label,
+        filePath: entry.filePath,
+        sourceLabel: entry.sourceLabel,
+        sourceUrl: entry.sourceUrl,
+        effectiveDate: entry.effectiveDate,
+        lastUpdated: entry.lastUpdated,
+        confidence: entry.confidence,
+        itemCount: entry.itemCount,
+      })
+    );
+
     const response: DataStatusResponse = {
       timestamp: new Date().toISOString(),
+      // Sprint C P12: ADR-001 binding fields
+      activeSource: 'src_data_static_files',
+      adrReference: ADR_REFERENCE,
+      precedence: PRECEDENCE,
       calculationSource: 'src_data_static_files',
       adminCrudTarget: 'supabase_tables',
       alignmentWarning: ALIGNMENT_WARNING,
@@ -174,6 +224,7 @@ export async function GET() {
         error: anyReachable ? undefined : 'all_queries_failed',
       },
       srcDataFiles: getSrcDataStatus(),
+      manifest: manifestSummary,
     };
 
     return Response.json(response, { status: 200 });
@@ -181,6 +232,8 @@ export async function GET() {
     return Response.json(
       {
         timestamp: new Date().toISOString(),
+        activeSource: 'src_data_static_files',
+        adrReference: ADR_REFERENCE,
         error: err instanceof Error ? err.name : 'unknown',
         alignmentWarning: ALIGNMENT_WARNING,
       },

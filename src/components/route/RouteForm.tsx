@@ -31,20 +31,34 @@ export default function RouteForm({ onCalculate, isCalculating }: RouteFormProps
   const [includeTolls, setIncludeTolls] = useState(true);
   const [roundTrip, setRoundTrip] = useState(false);
 
-  const [vehicleData, setVehicleData] = useState({
+  const [vehicleData, setVehicleData] = useState<{
+    fuelType: string;
+    fuelConsumption: number;
+    fuelPrice: number;
+    vehicleLabel: string;
+    fuelPriceSource: 'user_input' | 'reference_country' | 'reference_city';
+  }>({
     fuelType: 'benzin',
     fuelConsumption: 7.5,
     fuelPrice: 44,
     vehicleLabel: '',
+    fuelPriceSource: 'reference_country',
   });
 
   const handleVehicleChange = useCallback(
-    (data: { fuelType: string; fuelConsumption: number; fuelPrice: number; vehicleLabel?: string }) => {
+    (data: {
+      fuelType: string;
+      fuelConsumption: number;
+      fuelPrice: number;
+      vehicleLabel?: string;
+      fuelPriceSource: 'user_input' | 'reference_country' | 'reference_city';
+    }) => {
       setVehicleData({
         fuelType: data.fuelType,
         fuelConsumption: data.fuelConsumption,
         fuelPrice: data.fuelPrice,
         vehicleLabel: data.vehicleLabel ?? '',
+        fuelPriceSource: data.fuelPriceSource,
       });
     },
     []
@@ -77,6 +91,8 @@ export default function RouteForm({ onCalculate, isCalculating }: RouteFormProps
         fuelType: vehicleData.fuelType,
         includeTolls,
         roundTrip,
+        // Sprint C P11: propagate provenance to the route engine
+        fuelPriceSource: vehicleData.fuelPriceSource,
       });
     },
     [

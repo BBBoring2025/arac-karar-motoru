@@ -17,6 +17,10 @@
 
 import { getServerFlags, flagsToPublicJSON } from '@/lib/flags';
 import { supabase } from '@/lib/supabase';
+import {
+  getPaymentMode,
+  type PaymentMode,
+} from '@/lib/payment/state-machine';
 
 // Node runtime — iyzipay ve Supabase server SDK consistency için
 export const runtime = 'nodejs';
@@ -34,6 +38,8 @@ interface ServiceStatus {
 interface HealthResponse {
   status: 'ok' | 'degraded' | 'fail';
   timestamp: string;
+  // Sprint C P12: top-level paymentMode (3 honest modes)
+  paymentMode: PaymentMode;
   flags: ReturnType<typeof flagsToPublicJSON>;
   services: {
     supabase: ServiceStatus;
@@ -101,6 +107,12 @@ export async function GET() {
     const supabaseStatus = await probeSupabase();
     const iyzicoStatus = getIyzicoStatus(flags.paymentEnabled.enabled);
 
+    // Sprint C P12: derive top-level payment mode
+    const paymentMode = getPaymentMode({
+      paymentEnabled: flags.paymentEnabled.enabled,
+      iyzicoMode: iyzicoStatus.mode ?? null,
+    });
+
     // Determine overall status
     let status: HealthResponse['status'] = 'ok';
     if (!supabaseStatus.reachable) {
@@ -110,6 +122,7 @@ export async function GET() {
     const response: HealthResponse = {
       status,
       timestamp: new Date().toISOString(),
+      paymentMode,
       flags: flagsToPublicJSON(flags),
       services: {
         supabase: supabaseStatus,
@@ -124,6 +137,7 @@ export async function GET() {
       {
         status: 'fail',
         timestamp: new Date().toISOString(),
+        paymentMode: 'paymentDisabled',
         error: err instanceof Error ? err.name : 'unknown',
       },
       { status: 200 },

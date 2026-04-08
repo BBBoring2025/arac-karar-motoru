@@ -18,6 +18,7 @@ import TollBreakdownCard from '@/components/route/TollBreakdownCard';
 import TotalCostCard from '@/components/route/TotalCostCard';
 import RouteTimeline from '@/components/route/RouteTimeline';
 import RouteConfidenceNote from '@/components/route/RouteConfidenceNote';
+import DataSourceFooter from '@/components/ui/DataSourceFooter';
 import { trackRouteCalculated, trackError } from '@/lib/analytics';
 
 export default function RotaMaliyetPage() {
@@ -135,9 +136,10 @@ export default function RotaMaliyetPage() {
         )}
         </div>
 
-        {/* Alt bilgilendirme */}
-        <div className="mt-8 text-center text-xs text-gray-500 py-4 border-t border-gray-200">
-          <p>Kaynak: PETDER &amp; KGM 2026 | Veriler periyodik olarak güncellenmektedir.</p>
+        {/* Sprint C P7: data manifest footers (otoyol + yakit side by side) */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <DataSourceFooter manifestKey="otoyol-segments" />
+          <DataSourceFooter manifestKey="yakit" />
         </div>
 
         {/* CTA */}

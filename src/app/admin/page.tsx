@@ -5,20 +5,26 @@ import {
   Lock,
   LogOut,
   BarChart3,
-  FileText,
-  Wrench,
-  Road,
   Car,
-  Save,
-  Edit2,
-  X,
   RefreshCw,
   AlertTriangle,
+  FileText,
+  ExternalLink,
+  Database,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { vehicleDatabase } from '@/data/araclar';
+import {
+  getAllManifestEntries,
+  type DataManifestEntry,
+} from '@/lib/data-manifest';
 
-type Tab = 'dashboard' | 'mtv' | 'muayene' | 'otoyol' | 'araclar';
+// Sprint C P6: Tarife edit tabs (mtv | muayene | otoyol) removed per
+// ADR-001 — admin Supabase writes had zero user-visible effect because
+// the calculators read from src/data/*.ts. The misalignment is now closed
+// by binding src/data as the source of truth and hiding these tabs.
+// See docs/adr/0001-src-data-as-source-of-truth.md.
+type Tab = 'dashboard' | 'data-manifest' | 'araclar';
 
 interface DashboardStats {
   toplam_kullanici: number;
@@ -30,10 +36,12 @@ interface DashboardStats {
   aylik_pv: number;
 }
 
-interface TarifeRow {
-  id: number;
-  [key: string]: unknown;
-}
+const CONFIDENCE_BADGE: Record<string, string> = {
+  kesin: 'bg-green-500/20 text-green-400 border-green-500/30',
+  yüksek: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  yaklaşık: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  tahmini: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+};
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -42,25 +50,21 @@ export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
-  const [lastUpdate, setLastUpdate] = useState(new Date().toISOString());
 
   // Dashboard stats
   const [stats, setStats] = useState<DashboardStats | null>(null);
 
-  // Tarife data from Supabase
-  const [mtvData, setMtvData] = useState<TarifeRow[]>([]);
-  const [muayeneData, setMuayeneData] = useState<TarifeRow[]>([]);
-  const [otoyolData, setOtoyolData] = useState<TarifeRow[]>([]);
-  const [saving, setSaving] = useState(false);
-
-  const [editingMtvIdx, setEditingMtvIdx] = useState<number | null>(null);
-  const [editingMuayeneIdx, setEditingMuayeneIdx] = useState<number | null>(null);
-  const [editingOtoyolIdx, setEditingOtoyolIdx] = useState<number | null>(null);
+  // Sprint C P6: Sprint B's mtv/muayene/otoyol state, handlers, and JSX
+  // blocks have been intentionally removed. The /api/admin/tarifeleri
+  // endpoint is still functional (for Sprint B's regression script
+  // sprint-b-crud-prod-sync.mjs) but the admin UI no longer surfaces it.
 
   // Auth state check
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         // Admin rol kontrolü
         const { data: kullanici } = await supabase
@@ -78,7 +82,9 @@ export default function AdminPage() {
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         const { data: kullanici } = await supabase
           .from('kullanicilar')
@@ -102,21 +108,11 @@ export default function AdminPage() {
     setStats(json.data);
   }, []);
 
-  // Tarife data fetch
-  const fetchTarifeData = useCallback(async (tablo: string) => {
-    const res = await fetch(`/api/admin/tarifeleri?tablo=${tablo}`);
-    const json = await res.json();
-    return json.data || [];
-  }, []);
-
   useEffect(() => {
     if (isAuthenticated) {
       fetchDashboard();
-      fetchTarifeData('mtv_tarifeleri').then(setMtvData);
-      fetchTarifeData('muayene_ucretleri').then(setMuayeneData);
-      fetchTarifeData('otoyol_ucretleri').then(setOtoyolData);
     }
-  }, [isAuthenticated, fetchDashboard, fetchTarifeData]);
+  }, [isAuthenticated, fetchDashboard]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,50 +137,6 @@ export default function AdminPage() {
     await supabase.auth.signOut();
     setIsAuthenticated(false);
     setActiveTab('dashboard');
-  };
-
-  const handleSaveTarife = async (tablo: string, id: number, updates: Record<string, unknown>) => {
-    setSaving(true);
-    try {
-      const res = await fetch('/api/admin/tarifeleri', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tablo, id, updates }),
-      });
-
-      if (!res.ok) {
-        const json = await res.json();
-        alert('Kaydetme hatası: ' + json.error);
-        return;
-      }
-
-      setLastUpdate(new Date().toISOString());
-      // Refresh data
-      const data = await fetchTarifeData(tablo);
-      if (tablo === 'mtv_tarifeleri') setMtvData(data);
-      if (tablo === 'muayene_ucretleri') setMuayeneData(data);
-      if (tablo === 'otoyol_ucretleri') setOtoyolData(data);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleLocalUpdateMtv = (index: number, updates: Partial<TarifeRow>) => {
-    const newData = [...mtvData];
-    newData[index] = { ...newData[index], ...updates };
-    setMtvData(newData);
-  };
-
-  const handleLocalUpdateMuayene = (index: number, updates: Partial<TarifeRow>) => {
-    const newData = [...muayeneData];
-    newData[index] = { ...newData[index], ...updates };
-    setMuayeneData(newData);
-  };
-
-  const handleLocalUpdateOtoyol = (index: number, updates: Partial<TarifeRow>) => {
-    const newData = [...otoyolData];
-    newData[index] = { ...newData[index], ...updates };
-    setOtoyolData(newData);
   };
 
   if (isLoading) {
@@ -251,9 +203,7 @@ export default function AdminPage() {
       {/* Header */}
       <div className="bg-[#1B2A4A] border-b border-orange-500/20 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-white">
-            Yönetim Paneli
-          </h1>
+          <h1 className="text-3xl font-bold text-white">Yönetim Paneli</h1>
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold px-4 py-2 rounded-lg transition-all"
@@ -265,15 +215,13 @@ export default function AdminPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tab Navigation */}
+        {/* Tab Navigation — Sprint C P6: 3 tabs (was 5) */}
         <div className="flex flex-wrap gap-2 mb-8 border-b border-gray-700 pb-4">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-            { id: 'mtv', label: 'MTV Tarifeleri', icon: FileText },
-            { id: 'muayene', label: 'Muayene Ücretleri', icon: Wrench },
-            { id: 'otoyol', label: 'Otoyol Tarifeleri', icon: Road },
+            { id: 'data-manifest', label: 'Veri Manifestosu', icon: Database },
             { id: 'araclar', label: 'Araç Veritabanı', icon: Car },
-          ].map(tab => {
+          ].map((tab) => {
             const Icon = tab.icon;
             return (
               <button
@@ -292,330 +240,214 @@ export default function AdminPage() {
           })}
         </div>
 
-        {/* Last Update Timestamp */}
-        <div className="mb-6 text-xs text-gray-400">
-          Son güncelleme: {new Date(lastUpdate).toLocaleString('tr-TR')}
-        </div>
-
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-[#1B2A4A]/50 border border-orange-500/20 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-gray-400 text-sm font-medium">Toplam Rapor</p>
-                <BarChart3 className="w-5 h-5 text-orange-500" />
+          <div className="space-y-6">
+            {/* Sprint C P6: ADR-001 info card */}
+            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-5">
+              <div className="flex items-start gap-3">
+                <FileText className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-300" />
+                <div className="text-sm leading-relaxed">
+                  <p className="font-semibold text-amber-100">
+                    Tarife düzenleme dosya bazında yapılır (Sprint C / ADR-001)
+                  </p>
+                  <p className="mt-1 text-amber-200/90">
+                    MTV / muayene / otoyol / yakıt tarife sekmeleri kasıtlı
+                    olarak gizlendi. Sprint B&apos;de bu sekmelerden yapılan
+                    Supabase yazımları kullanıcı hesaplayıcılarını
+                    etkilemiyordu (calculators <code>src/data/*.ts</code>
+                    dosyalarından okuyor). Sprint C ADR-001 ile{' '}
+                    <code>src/data</code> tek doğruluk kaynağı olarak
+                    bağlandı. Tarife güncellemeleri için runbook&apos;u
+                    okuyun:
+                  </p>
+                  <div className="mt-3 flex flex-col gap-1 text-xs">
+                    <a
+                      href="https://github.com/BBBoring2025/arac-karar-motoru/blob/main/docs/data-update-runbook.md"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-amber-200 hover:text-amber-100 underline"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      docs/data-update-runbook.md
+                    </a>
+                    <a
+                      href="https://github.com/BBBoring2025/arac-karar-motoru/blob/main/docs/adr/0001-src-data-as-source-of-truth.md"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-amber-200 hover:text-amber-100 underline"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      docs/adr/0001-src-data-as-source-of-truth.md
+                    </a>
+                  </div>
+                </div>
               </div>
-              <p className="text-4xl font-bold text-white">
-                {stats?.toplam_rapor?.toLocaleString('tr-TR') || '—'}
-              </p>
-              <p className="text-gray-400 text-sm mt-2">
-                Bu ay: {stats?.aylik_rapor?.toLocaleString('tr-TR') || '0'}
-              </p>
             </div>
 
-            <div className="bg-[#1B2A4A]/50 border border-orange-500/20 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-gray-400 text-sm font-medium">Toplam Kullanıcı</p>
-                <BarChart3 className="w-5 h-5 text-orange-500" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-[#1B2A4A]/50 border border-orange-500/20 rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-gray-400 text-sm font-medium">
+                    Toplam Rapor
+                  </p>
+                  <BarChart3 className="w-5 h-5 text-orange-500" />
+                </div>
+                <p className="text-4xl font-bold text-white">
+                  {stats?.toplam_rapor?.toLocaleString('tr-TR') || '—'}
+                </p>
+                <p className="text-gray-400 text-sm mt-2">
+                  Bu ay: {stats?.aylik_rapor?.toLocaleString('tr-TR') || '0'}
+                </p>
               </div>
-              <p className="text-4xl font-bold text-white">
-                {stats?.toplam_kullanici?.toLocaleString('tr-TR') || '—'}
-              </p>
-              <p className="text-gray-400 text-sm mt-2">
-                B2B: {stats?.aktif_b2b || '0'}
-              </p>
+
+              <div className="bg-[#1B2A4A]/50 border border-orange-500/20 rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-gray-400 text-sm font-medium">
+                    Toplam Kullanıcı
+                  </p>
+                  <BarChart3 className="w-5 h-5 text-orange-500" />
+                </div>
+                <p className="text-4xl font-bold text-white">
+                  {stats?.toplam_kullanici?.toLocaleString('tr-TR') || '—'}
+                </p>
+                <p className="text-gray-400 text-sm mt-2">
+                  B2B: {stats?.aktif_b2b || '0'}
+                </p>
+              </div>
+
+              <div className="bg-[#1B2A4A]/50 border border-orange-500/20 rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-gray-400 text-sm font-medium">
+                    Aylık Gelir
+                  </p>
+                  <BarChart3 className="w-5 h-5 text-orange-500" />
+                </div>
+                <p className="text-4xl font-bold text-white">
+                  {stats?.aylik_gelir
+                    ? `₺${Number(stats.aylik_gelir).toLocaleString('tr-TR')}`
+                    : '—'}
+                </p>
+                <p className="text-gray-400 text-sm mt-2">
+                  Toplam:{' '}
+                  {stats?.toplam_gelir
+                    ? `₺${Number(stats.toplam_gelir).toLocaleString('tr-TR')}`
+                    : '₺0'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Sprint C P6: Data Manifest Tab — read-only view of src/data manifest */}
+        {activeTab === 'data-manifest' && (
+          <div className="bg-[#1B2A4A]/50 border border-orange-500/20 rounded-lg p-8">
+            <h2 className="text-2xl font-bold text-white mb-3">
+              Veri Manifestosu
+            </h2>
+            <p className="text-sm text-gray-400 mb-6">
+              Calculators&apos;ın okuduğu <code>src/data/*.ts</code>
+              dosyalarının tek normalize listesi. Düzenleme için runbook&apos;a
+              bakın.
+            </p>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left py-3 px-3 text-white font-semibold">
+                      Veri Tipi
+                    </th>
+                    <th className="text-left py-3 px-3 text-white font-semibold">
+                      Kaynak
+                    </th>
+                    <th className="text-center py-3 px-3 text-white font-semibold">
+                      Yürürlük
+                    </th>
+                    <th className="text-center py-3 px-3 text-white font-semibold">
+                      Son Güncelleme
+                    </th>
+                    <th className="text-center py-3 px-3 text-white font-semibold">
+                      Güven
+                    </th>
+                    <th className="text-right py-3 px-3 text-white font-semibold">
+                      Adet
+                    </th>
+                    <th className="text-left py-3 px-3 text-white font-semibold">
+                      Dosya
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getAllManifestEntries().map((entry: DataManifestEntry) => (
+                    <tr
+                      key={entry.key}
+                      className="border-b border-gray-800 hover:bg-gray-800/30"
+                    >
+                      <td className="py-3 px-3 text-white font-medium">
+                        {entry.label}
+                      </td>
+                      <td className="py-3 px-3 text-gray-300">
+                        <a
+                          href={entry.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-orange-400 hover:text-orange-300 underline"
+                        >
+                          {entry.sourceLabel}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </td>
+                      <td className="py-3 px-3 text-center text-gray-300">
+                        {entry.effectiveDate}
+                      </td>
+                      <td className="py-3 px-3 text-center text-gray-300">
+                        {entry.lastUpdated}
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-xs border ${
+                            CONFIDENCE_BADGE[entry.confidence] ||
+                            'bg-gray-500/20 text-gray-400 border-gray-500/30'
+                          }`}
+                        >
+                          {entry.confidence}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-right text-white font-medium">
+                        {entry.itemCount}
+                      </td>
+                      <td className="py-3 px-3">
+                        <code className="text-xs text-gray-400">
+                          {entry.filePath}
+                        </code>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
-            <div className="bg-[#1B2A4A]/50 border border-orange-500/20 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-gray-400 text-sm font-medium">Aylık Gelir</p>
-                <BarChart3 className="w-5 h-5 text-orange-500" />
-              </div>
-              <p className="text-4xl font-bold text-white">
-                {stats?.aylik_gelir ? `₺${Number(stats.aylik_gelir).toLocaleString('tr-TR')}` : '—'}
-              </p>
-              <p className="text-gray-400 text-sm mt-2">
-                Toplam: {stats?.toplam_gelir ? `₺${Number(stats.toplam_gelir).toLocaleString('tr-TR')}` : '₺0'}
+            <div className="mt-6 text-xs text-gray-500 leading-relaxed">
+              <p>
+                Bu liste{' '}
+                <code className="text-gray-400">src/lib/data-manifest.ts</code>
+                &apos;ten okunur. Sprint C P5 ile eklendi. Düzenleme:{' '}
+                <a
+                  href="https://github.com/BBBoring2025/arac-karar-motoru/blob/main/docs/data-update-runbook.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-orange-400 hover:text-orange-300 underline inline-flex items-center gap-1"
+                >
+                  docs/data-update-runbook.md
+                  <ExternalLink className="w-3 h-3" />
+                </a>
               </p>
             </div>
           </div>
         )}
 
-        {/* MTV Tarifeleri Tab */}
-        {activeTab === 'mtv' && (
-          <div className="bg-[#1B2A4A]/50 border border-orange-500/20 rounded-lg p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              MTV (Motorlu Taşıt Vergisi) Tarifeleri
-            </h2>
-
-            {mtvData.length === 0 ? (
-              <p className="text-gray-400">
-                Henüz veri yok. Supabase&apos;e MTV tarife verilerini yükleyin.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-700">
-                      <th className="text-left py-4 px-4 text-white font-semibold">Motor Hacmi</th>
-                      <th className="text-left py-4 px-4 text-white font-semibold">Yaş Aralığı</th>
-                      <th className="text-left py-4 px-4 text-white font-semibold">Yakıt</th>
-                      <th className="text-right py-4 px-4 text-white font-semibold">Yıllık (₺)</th>
-                      <th className="text-center py-4 px-4 text-white font-semibold">İşlemler</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {mtvData.map((row, idx) => (
-                      <tr key={row.id} className="border-b border-gray-800 hover:bg-gray-800/30">
-                        {editingMtvIdx === idx ? (
-                          <>
-                            <td className="py-4 px-4 text-gray-300">
-                              {String(row.motor_hacmi_alt)}-{String(row.motor_hacmi_ust)}cc
-                            </td>
-                            <td className="py-4 px-4 text-gray-300">
-                              {String(row.yas_alt)}-{String(row.yas_ust)} yaş
-                            </td>
-                            <td className="py-4 px-4 text-gray-300">{String(row.yakit_tipi)}</td>
-                            <td className="py-4 px-4 text-right">
-                              <input
-                                type="number"
-                                value={Number(row.yillik_tutar)}
-                                onChange={(e) => handleLocalUpdateMtv(idx, { yillik_tutar: Number(e.target.value) })}
-                                className="w-32 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-right"
-                              />
-                            </td>
-                            <td className="py-4 px-4 text-center flex gap-2 justify-center">
-                              <button
-                                onClick={() => {
-                                  handleSaveTarife('mtv_tarifeleri', row.id, { yillik_tutar: row.yillik_tutar });
-                                  setEditingMtvIdx(null);
-                                }}
-                                disabled={saving}
-                                className="bg-green-600 hover:bg-green-700 text-white p-1 rounded disabled:opacity-50"
-                              >
-                                <Save className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => setEditingMtvIdx(null)}
-                                className="bg-gray-600 hover:bg-gray-700 text-white p-1 rounded"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="py-4 px-4 text-gray-300">
-                              {String(row.motor_hacmi_alt)}-{String(row.motor_hacmi_ust)}cc
-                            </td>
-                            <td className="py-4 px-4 text-gray-300">
-                              {String(row.yas_alt)}-{String(row.yas_ust)} yaş
-                            </td>
-                            <td className="py-4 px-4 text-gray-300">{String(row.yakit_tipi)}</td>
-                            <td className="py-4 px-4 text-right text-white font-medium">
-                              ₺{Number(row.yillik_tutar).toLocaleString('tr-TR')}
-                            </td>
-                            <td className="py-4 px-4 text-center">
-                              <button
-                                onClick={() => setEditingMtvIdx(idx)}
-                                className="bg-orange-600 hover:bg-orange-700 text-white p-1 rounded inline-flex"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                            </td>
-                          </>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Muayene Ücretleri Tab */}
-        {activeTab === 'muayene' && (
-          <div className="bg-[#1B2A4A]/50 border border-orange-500/20 rounded-lg p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              Muayene Ücretleri
-            </h2>
-
-            {muayeneData.length === 0 ? (
-              <p className="text-gray-400">
-                Henüz veri yok. Supabase&apos;e muayene verilerini yükleyin.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-700">
-                      <th className="text-left py-4 px-4 text-white font-semibold">Araç Tipi</th>
-                      <th className="text-left py-4 px-4 text-white font-semibold">Muayene Türü</th>
-                      <th className="text-right py-4 px-4 text-white font-semibold">Ücret (₺)</th>
-                      <th className="text-center py-4 px-4 text-white font-semibold">İşlemler</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {muayeneData.map((row, idx) => (
-                      <tr key={row.id} className="border-b border-gray-800 hover:bg-gray-800/30">
-                        {editingMuayeneIdx === idx ? (
-                          <>
-                            <td className="py-4 px-4 text-gray-300">{String(row.arac_tipi)}</td>
-                            <td className="py-4 px-4 text-gray-300">{String(row.muayene_turu)}</td>
-                            <td className="py-4 px-4 text-right">
-                              <input
-                                type="number"
-                                value={Number(row.ucret)}
-                                onChange={(e) => handleLocalUpdateMuayene(idx, { ucret: Number(e.target.value) })}
-                                className="w-32 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-right"
-                              />
-                            </td>
-                            <td className="py-4 px-4 text-center flex gap-2 justify-center">
-                              <button
-                                onClick={() => {
-                                  handleSaveTarife('muayene_ucretleri', row.id, { ucret: row.ucret });
-                                  setEditingMuayeneIdx(null);
-                                }}
-                                disabled={saving}
-                                className="bg-green-600 hover:bg-green-700 text-white p-1 rounded disabled:opacity-50"
-                              >
-                                <Save className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => setEditingMuayeneIdx(null)}
-                                className="bg-gray-600 hover:bg-gray-700 text-white p-1 rounded"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="py-4 px-4 text-gray-300">{String(row.arac_tipi)}</td>
-                            <td className="py-4 px-4 text-gray-300">{String(row.muayene_turu)}</td>
-                            <td className="py-4 px-4 text-right text-white font-medium">
-                              ₺{Number(row.ucret).toLocaleString('tr-TR')}
-                            </td>
-                            <td className="py-4 px-4 text-center">
-                              <button
-                                onClick={() => setEditingMuayeneIdx(idx)}
-                                className="bg-orange-600 hover:bg-orange-700 text-white p-1 rounded inline-flex"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                            </td>
-                          </>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Otoyol Tarifeleri Tab */}
-        {activeTab === 'otoyol' && (
-          <div className="bg-[#1B2A4A]/50 border border-orange-500/20 rounded-lg p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              Otoyol Tarifeleri
-            </h2>
-
-            {otoyolData.length === 0 ? (
-              <p className="text-gray-400">
-                Henüz veri yok. Supabase&apos;e otoyol verilerini yükleyin.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-700">
-                      <th className="text-left py-4 px-4 text-white font-semibold">Güzergah</th>
-                      <th className="text-center py-4 px-4 text-white font-semibold">Araç Sınıfı</th>
-                      <th className="text-right py-4 px-4 text-white font-semibold">HGS (₺)</th>
-                      <th className="text-right py-4 px-4 text-white font-semibold">OGS (₺)</th>
-                      <th className="text-center py-4 px-4 text-white font-semibold">İşlemler</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {otoyolData.map((row, idx) => (
-                      <tr key={row.id} className="border-b border-gray-800 hover:bg-gray-800/30">
-                        {editingOtoyolIdx === idx ? (
-                          <>
-                            <td className="py-4 px-4 text-gray-300">{String(row.guzergah_adi)}</td>
-                            <td className="py-4 px-4 text-center text-gray-300">{String(row.arac_sinifi)}</td>
-                            <td className="py-4 px-4 text-right">
-                              <input
-                                type="number"
-                                step="0.1"
-                                value={Number(row.hgs_ucret)}
-                                onChange={(e) => handleLocalUpdateOtoyol(idx, { hgs_ucret: Number(e.target.value) })}
-                                className="w-24 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-right"
-                              />
-                            </td>
-                            <td className="py-4 px-4 text-right">
-                              <input
-                                type="number"
-                                step="0.1"
-                                value={Number(row.ogs_ucret)}
-                                onChange={(e) => handleLocalUpdateOtoyol(idx, { ogs_ucret: Number(e.target.value) })}
-                                className="w-24 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-right"
-                              />
-                            </td>
-                            <td className="py-4 px-4 text-center flex gap-2 justify-center">
-                              <button
-                                onClick={() => {
-                                  handleSaveTarife('otoyol_ucretleri', row.id, {
-                                    hgs_ucret: row.hgs_ucret,
-                                    ogs_ucret: row.ogs_ucret,
-                                  });
-                                  setEditingOtoyolIdx(null);
-                                }}
-                                disabled={saving}
-                                className="bg-green-600 hover:bg-green-700 text-white p-1 rounded disabled:opacity-50"
-                              >
-                                <Save className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => setEditingOtoyolIdx(null)}
-                                className="bg-gray-600 hover:bg-gray-700 text-white p-1 rounded"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="py-4 px-4 text-gray-300">{String(row.guzergah_adi)}</td>
-                            <td className="py-4 px-4 text-center text-gray-300">{String(row.arac_sinifi)}</td>
-                            <td className="py-4 px-4 text-right text-white font-medium">
-                              ₺{Number(row.hgs_ucret).toLocaleString('tr-TR')}
-                            </td>
-                            <td className="py-4 px-4 text-right text-white font-medium">
-                              ₺{Number(row.ogs_ucret).toLocaleString('tr-TR')}
-                            </td>
-                            <td className="py-4 px-4 text-center">
-                              <button
-                                onClick={() => setEditingOtoyolIdx(idx)}
-                                className="bg-orange-600 hover:bg-orange-700 text-white p-1 rounded inline-flex"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                            </td>
-                          </>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Araç Veritabanı Tab */}
+        {/* Araç Veritabanı Tab — already aligned with src/data, kept */}
         {activeTab === 'araclar' && (
           <div className="bg-[#1B2A4A]/50 border border-orange-500/20 rounded-lg p-8">
             <h2 className="text-2xl font-bold text-white mb-6">
@@ -626,20 +458,41 @@ export default function AdminPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-700">
-                    <th className="text-left py-4 px-4 text-white font-semibold">Marka</th>
-                    <th className="text-left py-4 px-4 text-white font-semibold">Model</th>
-                    <th className="text-center py-4 px-4 text-white font-semibold">Motor (cc)</th>
-                    <th className="text-center py-4 px-4 text-white font-semibold">Yakıt</th>
-                    <th className="text-center py-4 px-4 text-white font-semibold">Tüketim</th>
-                    <th className="text-right py-4 px-4 text-white font-semibold">Fiyat (₺)</th>
+                    <th className="text-left py-4 px-4 text-white font-semibold">
+                      Marka
+                    </th>
+                    <th className="text-left py-4 px-4 text-white font-semibold">
+                      Model
+                    </th>
+                    <th className="text-center py-4 px-4 text-white font-semibold">
+                      Motor (cc)
+                    </th>
+                    <th className="text-center py-4 px-4 text-white font-semibold">
+                      Yakıt
+                    </th>
+                    <th className="text-center py-4 px-4 text-white font-semibold">
+                      Tüketim
+                    </th>
+                    <th className="text-right py-4 px-4 text-white font-semibold">
+                      Fiyat (₺)
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {vehicleDatabase.vehicles.map((vehicle, idx) => (
-                    <tr key={idx} className="border-b border-gray-800 hover:bg-gray-800/30">
-                      <td className="py-4 px-4 text-gray-300">{vehicle.brand}</td>
-                      <td className="py-4 px-4 text-gray-300">{vehicle.model}</td>
-                      <td className="py-4 px-4 text-center text-gray-300">{vehicle.engineSize}</td>
+                    <tr
+                      key={idx}
+                      className="border-b border-gray-800 hover:bg-gray-800/30"
+                    >
+                      <td className="py-4 px-4 text-gray-300">
+                        {vehicle.brand}
+                      </td>
+                      <td className="py-4 px-4 text-gray-300">
+                        {vehicle.model}
+                      </td>
+                      <td className="py-4 px-4 text-center text-gray-300">
+                        {vehicle.engineSize}
+                      </td>
                       <td className="py-4 px-4 text-center text-gray-300 text-xs">
                         <span className="bg-orange-500/20 text-orange-400 px-2 py-1 rounded">
                           {vehicle.fuelType}

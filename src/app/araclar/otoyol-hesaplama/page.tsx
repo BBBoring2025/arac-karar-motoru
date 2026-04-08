@@ -8,6 +8,7 @@ import Input from '@/components/ui/Input';
 import { Zap, Info } from 'lucide-react';
 import { tollData } from '@/data/otoyol';
 import ConfidenceBadge from '@/components/ui/ConfidenceBadge';
+import DataSourceFooter from '@/components/ui/DataSourceFooter';
 
 export default function OtoyolHesaplama() {
   const [selectedRoute, setSelectedRoute] = useState('o1');
@@ -156,11 +157,8 @@ export default function OtoyolHesaplama() {
           </div>
         </Card>
 
-        {/* Güncellik İbaresi */}
-        <div className="text-center text-xs text-gray-500 py-3 border-t border-gray-200">
-          <p>Kaynak: {tollData.sourceLabel} | Tarife tarihi: {tollData.effectiveDate}</p>
-          <p className="mt-1">Veriler {tollData.lastUpdated} itibarıyla günceldir.</p>
-        </div>
+        {/* Sprint C P7: data manifest footer */}
+        <DataSourceFooter manifestKey="otoyol-segments" />
 
         <Card variant="highlighted" className="cursor-pointer hover:shadow-lg">
           <p className="text-center text-slate-900 mb-3 font-medium">Daha detaylı analiz için</p>

@@ -22,12 +22,17 @@ const BUYUKSEHIR_PLAKALARI = new Set([
 ]);
 
 /**
- * İlçe ile anchor node arası tahmini yol mesafesini hesaplar
+ * İlçe ile anchor node arası tahmini yol mesafesini hesaplar.
+ *
+ * Sprint C P9: returns the multiplier used so the route engine can
+ * report it as `districtOffsetSource.multiplier` for provenance.
+ * Existing consumers (route-engine etc.) ignore the new `multiplier`
+ * field; backward compatible.
  */
 export function calculateDistrictOffset(
   district: District,
   anchor: AnchorNode
-): { distanceKm: number; durationMin: number } {
+): { distanceKm: number; durationMin: number; multiplier: number } {
   const crowFlyKm = haversineDistance(
     district.lat,
     district.lng,
@@ -47,5 +52,5 @@ export function calculateDistrictOffset(
   const distanceKm = Math.round(crowFlyKm * multiplier * 10) / 10;
   const durationMin = Math.round(distanceKm * URBAN_MIN_PER_KM);
 
-  return { distanceKm, durationMin };
+  return { distanceKm, durationMin, multiplier };
 }

@@ -8,6 +8,7 @@ import Input from '@/components/ui/Input';
 import { Zap, Info } from 'lucide-react';
 import { fuelData } from '@/data/yakit';
 import ConfidenceBadge from '@/components/ui/ConfidenceBadge';
+import DataSourceFooter from '@/components/ui/DataSourceFooter';
 
 export default function YakitHesaplama() {
   const [inputMode, setInputMode] = useState<'vehicle' | 'manual'>('vehicle');
@@ -16,6 +17,8 @@ export default function YakitHesaplama() {
   const [monthlyKm, setMonthlyKm] = useState('1500');
   const [fuelType, setFuelType] = useState('benzin');
   const [fuelPrice, setFuelPrice] = useState('44.25');
+  // Sprint C P11: track if user has manually edited the price
+  const [priceOverridden, setPriceOverridden] = useState(false);
 
   const selectedVehicleData = useMemo(() => {
     return fuelData.vehicleConsumption.find(v => v.id === selectedVehicle);
@@ -126,15 +129,44 @@ export default function YakitHesaplama() {
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Yakıt Fiyatı ({selectedFuelData?.pricePerUnit})</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Yakıt Fiyatı ({selectedFuelData?.pricePerUnit})
+              {/* Sprint C P11: source label */}
+              {priceOverridden ? (
+                <span className="ml-2 inline-block px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-semibold rounded">
+                  Sizin fiyatınız
+                </span>
+              ) : (
+                <span className="ml-2 inline-block px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-medium rounded">
+                  Referans (PETDER)
+                </span>
+              )}
+            </label>
             <p className="text-xs text-slate-500 mb-2">
-              Referans fiyat — PETDER ortalaması ({fuelData.effectiveDate || fuelData.lastUpdated})
+              {priceOverridden
+                ? "Bu fiyat sizin tarafınızdan girildi."
+                : `Referans fiyat — PETDER ortalaması (${fuelData.effectiveDate || fuelData.lastUpdated})`}
+              {priceOverridden && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFuelPrice(String(selectedFuelData?.price ?? '44.25'));
+                    setPriceOverridden(false);
+                  }}
+                  className="ml-2 text-orange-600 hover:text-orange-700 underline"
+                >
+                  Referansa dön
+                </button>
+              )}
             </p>
             <Input
               type="number"
               step="0.01"
               value={fuelPrice}
-              onChange={(e) => setFuelPrice(e.target.value)}
+              onChange={(e) => {
+                setFuelPrice(e.target.value);
+                setPriceOverridden(true);
+              }}
             />
           </div>
         </div>
@@ -226,11 +258,8 @@ export default function YakitHesaplama() {
           </div>
         </Card>
 
-        {/* Güncellik İbaresi */}
-        <div className="text-center text-xs text-gray-500 py-3 border-t border-gray-200">
-          <p>Kaynak: {fuelData.sourceLabel || 'PETDER'} | Veri tarihi: {fuelData.effectiveDate || fuelData.lastUpdated}</p>
-          <p className="mt-1">Fiyatlar referans niteliğindedir. Güncel pompa fiyatları farklılık gösterebilir.</p>
-        </div>
+        {/* Sprint C P7: data manifest footer */}
+        <DataSourceFooter manifestKey="yakit" />
 
         <Card variant="highlighted" className="cursor-pointer hover:shadow-lg">
           <p className="text-center text-slate-900 mb-3 font-medium">Daha detaylı analiz için</p>
