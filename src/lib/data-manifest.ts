@@ -34,6 +34,32 @@ export type DataManifestKey =
   | 'noter'
   | 'amortisman';
 
+/**
+ * Sprint D P8 — how often each data family is expected to be refreshed.
+ * Drives the `stale` boolean on each manifest entry.
+ */
+export type RefreshCadence =
+  | 'daily'
+  | 'weekly'
+  | 'monthly'
+  | 'quarterly'
+  | 'yearly'
+  | 'on-publication';
+
+/**
+ * Sprint D P8 — maximum allowed days between updates, per cadence.
+ * A data entry is `stale` if `daysSinceUpdate > maxDaysForCadence`.
+ * `on-publication` has no upper bound (used for sources that update irregularly).
+ */
+const CADENCE_MAX_DAYS: Record<RefreshCadence, number> = {
+  daily: 2,
+  weekly: 10,
+  monthly: 35,
+  quarterly: 100,
+  yearly: 380,
+  'on-publication': Number.POSITIVE_INFINITY,
+};
+
 export interface DataManifestEntry {
   /** Manifest key (also used as URL anchor in the runbook) */
   key: DataManifestKey;
@@ -57,6 +83,64 @@ export interface DataManifestEntry {
   itemCount: number;
   /** Anchor in docs/data-update-runbook.md */
   runbookAnchor: string;
+
+  // ─── Sprint D P8: freshness fields ─────────────────────────────────────
+  /** Expected refresh cadence (drives stale detection) */
+  refreshCadence: RefreshCadence;
+  /** Computed at module init: true if now - lastUpdated > cadence threshold */
+  stale: boolean;
+  /** Computed: how many days since lastUpdated (floor) */
+  daysSinceUpdate: number;
+  /**
+   * Computed: max allowed days for the cadence.
+   * −1 means unbounded (on-publication cadence).
+   */
+  maxDaysForCadence: number;
+}
+
+/**
+ * Sprint D P8 — Pure staleness computation.
+ *
+ * `now` is injectable so tests can pin the clock for deterministic assertions.
+ * Production callers omit it; it defaults to `new Date()`.
+ */
+export function computeStaleness(
+  lastUpdated: string,
+  cadence: RefreshCadence,
+  now: Date = new Date()
+): { stale: boolean; daysSinceUpdate: number; maxDaysForCadence: number } {
+  const updated = new Date(lastUpdated);
+  const daysSinceUpdate = Math.floor(
+    (now.getTime() - updated.getTime()) / 86_400_000
+  );
+  const max = CADENCE_MAX_DAYS[cadence];
+  return {
+    stale: daysSinceUpdate > max,
+    daysSinceUpdate,
+    maxDaysForCadence: max === Number.POSITIVE_INFINITY ? -1 : max,
+  };
+}
+
+/**
+ * Sprint D P8 — Internal helper. Builds an entry from its base fields
+ * and computes the staleness-related fields at module init time.
+ */
+type ManifestEntryInput = Omit<
+  DataManifestEntry,
+  'stale' | 'daysSinceUpdate' | 'maxDaysForCadence'
+>;
+
+function buildEntry(input: ManifestEntryInput): DataManifestEntry {
+  const { stale, daysSinceUpdate, maxDaysForCadence } = computeStaleness(
+    input.lastUpdated,
+    input.refreshCadence
+  );
+  return {
+    ...input,
+    stale,
+    daysSinceUpdate,
+    maxDaysForCadence,
+  };
 }
 
 /**
@@ -107,9 +191,13 @@ function amortismanItemCount(): number {
  * URL, dates, and confidence from the underlying data file at module-init
  * time. The data files own their own truth; the manifest normalizes the
  * shape so consumers don't have to crawl them.
+ *
+ * Sprint D P8 — each entry is wrapped with `buildEntry()` which computes
+ * the `stale`, `daysSinceUpdate`, and `maxDaysForCadence` fields from the
+ * `lastUpdated` + `refreshCadence` pair.
  */
 export const dataManifest: Record<DataManifestKey, DataManifestEntry> = {
-  mtv: {
+  mtv: buildEntry({
     key: 'mtv',
     label: 'MTV Tarifeleri',
     sourceLabel: mtvData.sourceLabel,
@@ -121,8 +209,10 @@ export const dataManifest: Record<DataManifestKey, DataManifestEntry> = {
     filePath: 'src/data/mtv.ts',
     itemCount: mtvItemCount(),
     runbookAnchor: '#mtv',
-  },
-  muayene: {
+    // GİB annual tariff → yearly cadence
+    refreshCadence: 'yearly',
+  }),
+  muayene: buildEntry({
     key: 'muayene',
     label: 'Muayene Ücretleri',
     sourceLabel: inspectionData.sourceLabel,
@@ -134,8 +224,10 @@ export const dataManifest: Record<DataManifestKey, DataManifestEntry> = {
     filePath: 'src/data/muayene.ts',
     itemCount: muayeneItemCount(),
     runbookAnchor: '#muayene',
-  },
-  yakit: {
+    // TÜVTÜRK annual tariff → yearly cadence
+    refreshCadence: 'yearly',
+  }),
+  yakit: buildEntry({
     key: 'yakit',
     label: 'Yakıt Fiyatları',
     sourceLabel: fuelData.sourceLabel,
@@ -147,8 +239,11 @@ export const dataManifest: Record<DataManifestKey, DataManifestEntry> = {
     filePath: 'src/data/yakit.ts',
     itemCount: fuelItemCount(),
     runbookAnchor: '#yakit',
-  },
-  'otoyol-routes': {
+    // PETDER prices fluctuate continuously → monthly cadence (the runbook
+    // target). Yakıt IS stale as of 2026-04-09 because lastUpdated=2026-01-15.
+    refreshCadence: 'monthly',
+  }),
+  'otoyol-routes': buildEntry({
     key: 'otoyol-routes',
     label: 'Otoyol Tarifeleri (route-based, eski)',
     sourceLabel: tollData.sourceLabel,
@@ -161,8 +256,10 @@ export const dataManifest: Record<DataManifestKey, DataManifestEntry> = {
     filePath: 'src/data/otoyol.ts',
     itemCount: tollRoutesItemCount(),
     runbookAnchor: '#otoyol-routes',
-  },
-  'otoyol-segments': {
+    // KGM annual publication → yearly
+    refreshCadence: 'yearly',
+  }),
+  'otoyol-segments': buildEntry({
     key: 'otoyol-segments',
     label: 'Otoyol/Köprü Segmentleri (route engine)',
     sourceLabel: 'KGM 2026 Resmi Tarifesi (köprüler) + tahmini segmentler',
@@ -175,8 +272,9 @@ export const dataManifest: Record<DataManifestKey, DataManifestEntry> = {
     filePath: 'src/data/routes/toll-segments.ts',
     itemCount: tollSegmentsItemCount(),
     runbookAnchor: '#otoyol-segments',
-  },
-  araclar: {
+    refreshCadence: 'yearly',
+  }),
+  araclar: buildEntry({
     key: 'araclar',
     label: 'Araç Veritabanı',
     sourceLabel: vehicleDatabase.sourceLabel,
@@ -188,8 +286,10 @@ export const dataManifest: Record<DataManifestKey, DataManifestEntry> = {
     filePath: 'src/data/araclar.ts',
     itemCount: araclarItemCount(),
     runbookAnchor: '#araclar',
-  },
-  noter: {
+    // Vehicle prices change quarterly per OYDER benchmarks
+    refreshCadence: 'quarterly',
+  }),
+  noter: buildEntry({
     key: 'noter',
     label: 'Noter Ücretleri',
     sourceLabel: noterData.sourceLabel,
@@ -201,8 +301,10 @@ export const dataManifest: Record<DataManifestKey, DataManifestEntry> = {
     filePath: 'src/data/noter.ts',
     itemCount: noterItemCount(),
     runbookAnchor: '#noter',
-  },
-  amortisman: {
+    // Adalet Bakanlığı annual tariff
+    refreshCadence: 'yearly',
+  }),
+  amortisman: buildEntry({
     key: 'amortisman',
     label: 'Amortisman Oranları',
     sourceLabel: amortismanData.sourceLabel,
@@ -214,7 +316,9 @@ export const dataManifest: Record<DataManifestKey, DataManifestEntry> = {
     filePath: 'src/data/amortisman.ts',
     itemCount: amortismanItemCount(),
     runbookAnchor: '#amortisman',
-  },
+    // OYDER sector benchmarks update quarterly
+    refreshCadence: 'quarterly',
+  }),
 };
 
 /**
@@ -236,6 +340,20 @@ export function getAllManifestEntries(): DataManifestEntry[] {
   return (Object.keys(dataManifest) as DataManifestKey[]).map(
     (k) => dataManifest[k]
   );
+}
+
+/**
+ * Sprint D P8 — Return only the stale manifest entries.
+ * Used by `/api/health.dataFreshness`, `/api/data-status.dataFreshness`,
+ * and the admin dashboard stale warning card.
+ *
+ * NOTE: staleness is computed ONCE at module init time using the host clock.
+ * For long-running server instances this means `daysSinceUpdate` drifts;
+ * in practice Next.js cold-starts the lambda frequently enough that this is
+ * acceptable. If we ever need real-time staleness, recompute per request.
+ */
+export function getStaleEntries(): DataManifestEntry[] {
+  return getAllManifestEntries().filter((e) => e.stale);
 }
 
 /**

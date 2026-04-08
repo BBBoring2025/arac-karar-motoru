@@ -4,10 +4,14 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Menu, X, ChevronDown, Calculator } from "lucide-react";
 import Button from "@/components/ui/Button";
+// Sprint D P6 — public beta badge (shared hook with Footer)
+import { usePublicBeta } from "@/lib/hooks/usePublicBeta";
 
 const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isToolsDropdownOpen, setIsToolsDropdownOpen] = useState(false);
+  // Sprint D P6: beta pill is visible when publicBetaMode=true (fail-safe)
+  const isBeta = usePublicBeta();
 
   const tools = [
     { label: "MTV Hesaplama", href: "/araclar/mtv-hesaplama" },
@@ -29,6 +33,16 @@ const Header: React.FC = () => {
             <span className="font-bold text-lg text-gray-900">
               Araç <span className="text-orange-500">Karar</span> Motoru
             </span>
+            {/* Sprint D P6 — BETA pill (visible when publicBetaMode=true) */}
+            {isBeta && (
+              <span
+                className="ml-1 inline-flex items-center rounded-full border border-orange-400 bg-orange-100 px-2 py-0.5 text-[10px] font-bold uppercase text-orange-700"
+                title="Public Beta — ödeme sandbox modunda, gerçek tahsilat yapılmıyor. Detay için footer'a bakın."
+                aria-label="Public Beta"
+              >
+                BETA
+              </span>
+            )}
           </Link>
 
           {/* Desktop Navigation */}

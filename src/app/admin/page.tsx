@@ -11,20 +11,34 @@ import {
   FileText,
   ExternalLink,
   Database,
+  Mail,
+  CheckCircle,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { vehicleDatabase } from '@/data/araclar';
 import {
   getAllManifestEntries,
+  getStaleEntries,
   type DataManifestEntry,
 } from '@/lib/data-manifest';
 
-// Sprint C P6: Tarife edit tabs (mtv | muayene | otoyol) removed per
-// ADR-001 — admin Supabase writes had zero user-visible effect because
-// the calculators read from src/data/*.ts. The misalignment is now closed
-// by binding src/data as the source of truth and hiding these tabs.
-// See docs/adr/0001-src-data-as-source-of-truth.md.
-type Tab = 'dashboard' | 'data-manifest' | 'araclar';
+// Sprint C P6: Tarife edit tabs (mtv | muayene | otoyol) removed per ADR-001.
+// Sprint D P10: 'erken-erisim' tab added for waitlist read-only view.
+type Tab = 'dashboard' | 'data-manifest' | 'araclar' | 'erken-erisim';
+
+interface EarlyAccessEntry {
+  id: number;
+  ad: string;
+  email: string;
+  ilgi: string;
+  not_metni: string | null;
+  source_page: string | null;
+  ip_hash: string | null;
+  user_agent: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface DashboardStats {
   toplam_kullanici: number;
@@ -53,6 +67,16 @@ export default function AdminPage() {
 
   // Dashboard stats
   const [stats, setStats] = useState<DashboardStats | null>(null);
+
+  // Sprint D P10 — stale manifest entries (computed at module init time from data-manifest)
+  const [staleEntries] = useState<DataManifestEntry[]>(() => getStaleEntries());
+
+  // Sprint D P10 — early access entries (fetched from /api/admin/early-access)
+  const [earlyAccessData, setEarlyAccessData] = useState<{
+    count: number;
+    entries: EarlyAccessEntry[];
+  } | null>(null);
+  const [earlyAccessLoading, setEarlyAccessLoading] = useState(false);
 
   // Sprint C P6: Sprint B's mtv/muayene/otoyol state, handlers, and JSX
   // blocks have been intentionally removed. The /api/admin/tarifeleri
@@ -108,11 +132,33 @@ export default function AdminPage() {
     setStats(json.data);
   }, []);
 
+  // Sprint D P10 — early access list fetch
+  const fetchEarlyAccess = useCallback(async () => {
+    setEarlyAccessLoading(true);
+    try {
+      const res = await fetch('/api/admin/early-access?limit=100');
+      const json = await res.json();
+      if (json.ok) {
+        setEarlyAccessData({ count: json.count, entries: json.entries });
+      }
+    } catch (err) {
+      console.error('Early access fetch error:', err);
+    } finally {
+      setEarlyAccessLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchDashboard();
     }
   }, [isAuthenticated, fetchDashboard]);
+
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'erken-erisim' && !earlyAccessData) {
+      fetchEarlyAccess();
+    }
+  }, [isAuthenticated, activeTab, earlyAccessData, fetchEarlyAccess]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,12 +261,13 @@ export default function AdminPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tab Navigation — Sprint C P6: 3 tabs (was 5) */}
+        {/* Tab Navigation — Sprint C P6: 3 tabs, Sprint D P10: + erken-erisim */}
         <div className="flex flex-wrap gap-2 mb-8 border-b border-gray-700 pb-4">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
             { id: 'data-manifest', label: 'Veri Manifestosu', icon: Database },
             { id: 'araclar', label: 'Araç Veritabanı', icon: Car },
+            { id: 'erken-erisim', label: 'Erken Erişim', icon: Mail },
           ].map((tab) => {
             const Icon = tab.icon;
             return (
@@ -243,6 +290,60 @@ export default function AdminPage() {
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
+            {/* Sprint D P10: Stale data warning card */}
+            {staleEntries.length > 0 ? (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-5">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-300" />
+                  <div className="flex-1 text-sm leading-relaxed">
+                    <p className="font-semibold text-amber-100">
+                      ⚠️ Bayat Veri Uyarısı ({staleEntries.length})
+                    </p>
+                    <p className="mt-1 text-amber-200/90">
+                      Aşağıdaki veri kaynakları beklenen güncelleme
+                      cadence'ından geri kalmış. Runbook&apos;u takip edip
+                      güncelleyin.
+                    </p>
+                    <ul className="mt-3 space-y-1.5">
+                      {staleEntries.map((e) => (
+                        <li
+                          key={e.key}
+                          className="flex items-center gap-2 text-amber-200"
+                        >
+                          <span className="font-semibold text-amber-100">
+                            {e.label}
+                          </span>
+                          <span>•</span>
+                          <span>
+                            {e.daysSinceUpdate} gün geçti (maksimum{' '}
+                            {e.maxDaysForCadence} gün —{' '}
+                            {e.refreshCadence} cadence)
+                          </span>
+                          <a
+                            href={`https://github.com/BBBoring2025/arac-karar-motoru/blob/main/docs/data-update-runbook.md${e.runbookAnchor}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-1 text-amber-300 underline hover:text-amber-100"
+                          >
+                            runbook
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-green-500/40 bg-green-500/10 p-4">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="h-5 w-5 text-green-400" />
+                  <p className="text-sm text-green-300">
+                    ✅ Tüm veri kaynakları güncel — bayat veri yok
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Sprint C P6: ADR-001 info card */}
             <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-5">
               <div className="flex items-start gap-3">
@@ -442,6 +543,129 @@ export default function AdminPage() {
                   docs/data-update-runbook.md
                   <ExternalLink className="w-3 h-3" />
                 </a>
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Sprint D P10: Erken Erişim (Waitlist) Tab — read-only from /api/admin/early-access */}
+        {activeTab === 'erken-erisim' && (
+          <div className="bg-[#1B2A4A]/50 border border-orange-500/20 rounded-lg p-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-1">
+                  Erken Erişim Başvuruları{' '}
+                  {earlyAccessData && `(${earlyAccessData.count})`}
+                </h2>
+                <p className="text-sm text-gray-400">
+                  Sprint D P3 —{' '}
+                  <code className="text-orange-400">/api/early-access</code>{' '}
+                  POST endpoint&apos;inden gelen kayıtlar. Read-only görünüm.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setEarlyAccessData(null);
+                  fetchEarlyAccess();
+                }}
+                disabled={earlyAccessLoading}
+                className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg transition-all"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 ${earlyAccessLoading ? 'animate-spin' : ''}`}
+                />
+                Yenile
+              </button>
+            </div>
+
+            {earlyAccessLoading && !earlyAccessData && (
+              <p className="text-gray-400 py-8 text-center">Yükleniyor...</p>
+            )}
+
+            {earlyAccessData && earlyAccessData.count === 0 && (
+              <div className="rounded-lg border border-gray-700 bg-gray-800/30 p-8 text-center">
+                <Mail className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+                <p className="text-gray-400">
+                  Henüz erken erişim başvurusu yok.
+                </p>
+              </div>
+            )}
+
+            {earlyAccessData && earlyAccessData.count > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-700">
+                      <th className="text-left py-3 px-3 text-white font-semibold">
+                        ID
+                      </th>
+                      <th className="text-left py-3 px-3 text-white font-semibold">
+                        Ad
+                      </th>
+                      <th className="text-left py-3 px-3 text-white font-semibold">
+                        E-posta
+                      </th>
+                      <th className="text-left py-3 px-3 text-white font-semibold">
+                        İlgi
+                      </th>
+                      <th className="text-left py-3 px-3 text-white font-semibold">
+                        Kaynak
+                      </th>
+                      <th className="text-left py-3 px-3 text-white font-semibold">
+                        Durum
+                      </th>
+                      <th className="text-left py-3 px-3 text-white font-semibold">
+                        Tarih
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {earlyAccessData.entries.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="border-b border-gray-800 hover:bg-gray-800/30"
+                      >
+                        <td className="py-3 px-3 text-gray-400 font-mono text-xs">
+                          #{row.id}
+                        </td>
+                        <td className="py-3 px-3 text-white">{row.ad}</td>
+                        <td className="py-3 px-3 text-gray-300">
+                          <a
+                            href={`mailto:${row.email}`}
+                            className="text-orange-400 hover:text-orange-300 underline"
+                          >
+                            {row.email}
+                          </a>
+                        </td>
+                        <td className="py-3 px-3 text-gray-300">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                            {row.ilgi}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-gray-400 text-xs">
+                          {row.source_page ?? '-'}
+                        </td>
+                        <td className="py-3 px-3 text-gray-300">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-700 text-gray-300">
+                            {row.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-gray-400 text-xs">
+                          {new Date(row.created_at).toLocaleString('tr-TR')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="mt-6 text-xs text-gray-500 leading-relaxed">
+              <p>
+                Supabase tablosu:{' '}
+                <code className="text-gray-400">erken_erisim</code>. RLS etkin:
+                public INSERT-only, admin service role SELECT. KVKK: IP SHA-256
+                hash olarak saklanır, cleartext yok.
               </p>
             </div>
           </div>

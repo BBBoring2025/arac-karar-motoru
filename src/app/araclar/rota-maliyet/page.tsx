@@ -6,7 +6,7 @@
  * Sprint 1 motorunu (calculateRoute) kullanır.
  */
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { AlertTriangle } from 'lucide-react';
 import { calculateRoute } from '@/lib/route/route-engine';
@@ -19,7 +19,8 @@ import TotalCostCard from '@/components/route/TotalCostCard';
 import RouteTimeline from '@/components/route/RouteTimeline';
 import RouteConfidenceNote from '@/components/route/RouteConfidenceNote';
 import DataSourceFooter from '@/components/ui/DataSourceFooter';
-import { trackRouteCalculated, trackError } from '@/lib/analytics';
+// Sprint D P7 — tool_opened event added on top of existing Sprint A analytics
+import { trackRouteCalculated, trackError, trackToolOpened } from '@/lib/analytics';
 
 export default function RotaMaliyetPage() {
   const [result, setResult] = useState<RouteResult | null>(null);
@@ -27,6 +28,11 @@ export default function RotaMaliyetPage() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [showRoundTrip, setShowRoundTrip] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
+
+  // Sprint D P7 — tool_opened on mount
+  useEffect(() => {
+    trackToolOpened('rota');
+  }, []);
 
   const handleCalculate = useCallback((params: RouteParams) => {
     setIsCalculating(true);

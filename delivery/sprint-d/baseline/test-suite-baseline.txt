@@ -1,0 +1,34 @@
+=== Sprint D Baseline Test Suite (Sprint C c34193a) ===
+Date: 2026-04-08T21:02:09Z
+
+--- callback-url.test.ts ---
+
+==================================================
+Sonuç: 8 geçti, 0 kaldı
+
+--- state-machine.test.ts ---
+
+==================================================
+Sonuç: 9 geçti, 0 kaldı
+
+--- data-manifest.test.ts ---
+
+==================================================
+Sonuç: 84 geçti, 0 kaldı
+
+--- route-engine.test.ts ---
+
+==================================================
+Sonuç: 34 geçti, 0 kaldı
+
+--- edge-cases.test.ts ---
+
+==================================================
+Edge Case Sonuç: 16 geçti, 0 kaldı
+
+--- graph-connectivity.test.ts ---
+Toplam çift: 3240
+Başarılı: 3240
+Başarısız: 0
+
+✓ Tüm il merkezleri birbirine bağlı — graf tam bağlantılı!

@@ -1,0 +1,46 @@
+=== Sprint D Final Test Suite Run ===
+Date: 2026-04-08T21:41:08Z
+
+--- flags.test.ts (Sprint D P1/P7) ---
+
+==================================================
+Sonuç: 19 geçti, 0 kaldı
+
+--- data-manifest.test.ts (Sprint C P5 + Sprint D P8) ---
+
+==================================================
+Sonuç: 135 geçti, 0 kaldı
+
+--- callback-url.test.ts (Sprint C P2) ---
+
+==================================================
+Sonuç: 8 geçti, 0 kaldı
+
+--- state-machine.test.ts (Sprint C P2) ---
+
+==================================================
+Sonuç: 9 geçti, 0 kaldı
+
+--- validation.test.ts (Sprint D P3) ---
+
+==================================================
+Sonuç: 32 geçti, 0 kaldı
+
+--- route-engine.test.ts (Sprint A/B) ---
+
+==================================================
+Sonuç: 34 geçti, 0 kaldı
+
+--- edge-cases.test.ts (Sprint A/B) ---
+
+==================================================
+Edge Case Sonuç: 16 geçti, 0 kaldı
+
+--- graph-connectivity.test.ts (Sprint A/B) ---
+Toplam çift: 3240
+Başarılı: 3240
+Başarısız: 0
+
+✓ Tüm il merkezleri birbirine bağlı — graf tam bağlantılı!
+
+=== Total: 19 + 135 + 8 + 9 + 32 + 34 + 16 + 3240 = 3493 assertions PASS ===

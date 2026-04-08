@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import Layout from "@/components/layout/Layout";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://arackararmotoru.com";
+
+// Sprint D P7 — Plausible domain env var.
+// When set, the Plausible script is loaded and window.plausible() becomes
+// available. When unset, analytics is honestly disabled (flags.analyticsEnabled
+// returns { enabled: false, reason: 'missing_env' }).
+const PLAUSIBLE_DOMAIN = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -74,6 +81,22 @@ export default function RootLayout({
             }),
           }}
         />
+        {/* Sprint D P7 — Plausible analytics.
+            Loads only when NEXT_PUBLIC_PLAUSIBLE_DOMAIN env var is set.
+            When unset: no script, no tracking, analyticsEnabled flag honestly false. */}
+        {PLAUSIBLE_DOMAIN && (
+          <>
+            <Script
+              defer
+              data-domain={PLAUSIBLE_DOMAIN}
+              src="https://plausible.io/js/script.js"
+              strategy="afterInteractive"
+            />
+            <Script id="plausible-init" strategy="afterInteractive">
+              {`window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }`}
+            </Script>
+          </>
+        )}
       </head>
       <body className="min-h-full flex flex-col bg-white text-gray-900">
         <Layout>{children}</Layout>

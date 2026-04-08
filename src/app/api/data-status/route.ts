@@ -22,7 +22,13 @@ import { fuelData } from '@/data/yakit';
 import { vehicleDatabase } from '@/data/araclar';
 import { tollData } from '@/data/otoyol';
 // Sprint C P12: data manifest is the canonical metadata source
-import { getAllManifestEntries } from '@/lib/data-manifest';
+// Sprint D P9: + getStaleEntries + RefreshCadence for freshness summary
+import {
+  getAllManifestEntries,
+  getStaleEntries,
+  type DataManifestKey,
+  type RefreshCadence,
+} from '@/lib/data-manifest';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -55,6 +61,23 @@ interface ManifestSummary {
   itemCount: number;
 }
 
+interface StaleEntrySummary {
+  key: DataManifestKey;
+  label: string;
+  cadence: RefreshCadence;
+  daysSinceUpdate: number;
+  maxDaysForCadence: number;
+  runbookAnchor: string;
+}
+
+interface DataFreshnessBlock {
+  generatedAt: string;
+  totalEntries: number;
+  staleCount: number;
+  staleKeys: DataManifestKey[];
+  staleSummary: StaleEntrySummary[];
+}
+
 interface DataStatusResponse {
   timestamp: string;
   // Sprint C P12: explicit binding decision (was implied)
@@ -72,6 +95,8 @@ interface DataStatusResponse {
   srcDataFiles: Record<string, SrcDataStatus>;
   // Sprint C P12: manifest summary (single source for admin UI + footer)
   manifest: ManifestSummary[];
+  // Sprint D P9: data freshness summary (full detail, cheap version on /api/health)
+  dataFreshness: DataFreshnessBlock;
 }
 
 // Sprint C ADR-001 binding: src/data is the source of truth.
@@ -195,19 +220,35 @@ export async function GET() {
     const anyReachable = tables.some((t) => t.rowCount !== null);
 
     // Sprint C P12: build manifest summary from data-manifest.ts
-    const manifestSummary: ManifestSummary[] = getAllManifestEntries().map(
-      (entry) => ({
-        key: entry.key,
-        label: entry.label,
-        filePath: entry.filePath,
-        sourceLabel: entry.sourceLabel,
-        sourceUrl: entry.sourceUrl,
-        effectiveDate: entry.effectiveDate,
-        lastUpdated: entry.lastUpdated,
-        confidence: entry.confidence,
-        itemCount: entry.itemCount,
-      })
-    );
+    const allEntries = getAllManifestEntries();
+    const manifestSummary: ManifestSummary[] = allEntries.map((entry) => ({
+      key: entry.key,
+      label: entry.label,
+      filePath: entry.filePath,
+      sourceLabel: entry.sourceLabel,
+      sourceUrl: entry.sourceUrl,
+      effectiveDate: entry.effectiveDate,
+      lastUpdated: entry.lastUpdated,
+      confidence: entry.confidence,
+      itemCount: entry.itemCount,
+    }));
+
+    // Sprint D P9: data freshness summary (full detail)
+    const staleEntries = getStaleEntries();
+    const dataFreshness: DataFreshnessBlock = {
+      generatedAt: new Date().toISOString(),
+      totalEntries: allEntries.length,
+      staleCount: staleEntries.length,
+      staleKeys: staleEntries.map((e) => e.key),
+      staleSummary: staleEntries.map((e) => ({
+        key: e.key,
+        label: e.label,
+        cadence: e.refreshCadence,
+        daysSinceUpdate: e.daysSinceUpdate,
+        maxDaysForCadence: e.maxDaysForCadence,
+        runbookAnchor: e.runbookAnchor,
+      })),
+    };
 
     const response: DataStatusResponse = {
       timestamp: new Date().toISOString(),
@@ -225,6 +266,7 @@ export async function GET() {
       },
       srcDataFiles: getSrcDataStatus(),
       manifest: manifestSummary,
+      dataFreshness,
     };
 
     return Response.json(response, { status: 200 });

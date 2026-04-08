@@ -18,6 +18,8 @@ import {
   TrendingDown,
   BarChart3,
 } from "lucide-react";
+// Sprint D P7 — premium_cta_clicked analytics event
+import { trackPremiumCTA } from "@/lib/analytics";
 
 interface FAQItem {
   question: string;
@@ -189,13 +191,19 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Link href="/rapor">
+              <Link
+                href="/rapor"
+                onClick={() => trackPremiumCTA('hero_ucretsiz_hesapla')}
+              >
                 <Button variant="primary" size="lg" className="w-full sm:w-auto">
                   <span>Ücretsiz Hesapla</span>
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
-              <Link href="/rapor">
+              <Link
+                href="/rapor"
+                onClick={() => trackPremiumCTA('hero_ornek_rapor')}
+              >
                 <Button variant="outline" size="lg" className="w-full sm:w-auto">
                   Örnek Raporu Gör
                 </Button>

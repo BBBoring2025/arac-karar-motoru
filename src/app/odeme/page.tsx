@@ -25,6 +25,14 @@ import {
   type PaymentState,
   type PaymentMode,
 } from '@/lib/payment/state-machine';
+// Sprint D P5 — waitlist default for public sandbox mode
+import EarlyAccessForm from '@/components/payment/EarlyAccessForm';
+// Sprint D P7 — analytics call-site backfill
+import {
+  trackCheckoutStarted,
+  trackPaymentSuccess,
+  trackPaymentFailed,
+} from '@/lib/analytics';
 
 /** Step indicator at the top of the flow */
 function StepIndicator({ current }: { current: number }) {
@@ -81,6 +89,12 @@ function ProductSelection({
 }: {
   onSelect: (p: PaymentProduct) => void;
 }) {
+  const handleProductClick = (product: PaymentProduct) => {
+    // Sprint D P7 — checkout_started event
+    trackCheckoutStarted(product.id, product.price);
+    onSelect(product);
+  };
+
   const featureMap: Record<string, string[]> = {
     tekli: [
       'Detayli maliyet analizi',
@@ -111,7 +125,7 @@ function ProductSelection({
         {PRODUCTS.map((product) => (
           <button
             key={product.id}
-            onClick={() => onSelect(product)}
+            onClick={() => handleProductClick(product)}
             className="border border-gray-700 bg-[#1B2A4A]/50 rounded-lg p-6 text-left hover:border-orange-500/50 hover:bg-[#1B2A4A]/80 transition-all group cursor-pointer"
           >
             <h3 className="text-lg font-bold text-white mb-1 group-hover:text-orange-400 transition-colors">
@@ -395,6 +409,18 @@ function PaymentResult() {
   const paymentId = searchParams.get('paymentId');
   const message = searchParams.get('message');
 
+  // Sprint D P7 — analytics on callback landing (fire once per mount)
+  useEffect(() => {
+    if (status === 'success') {
+      trackPaymentSuccess(paymentId ?? 'unknown', 0);
+    } else if (status === 'error') {
+      trackPaymentFailed(
+        paymentId ?? 'unknown',
+        message ? decodeURIComponent(message) : 'unknown'
+      );
+    }
+  }, [status, paymentId, message]);
+
   if (!status) return null;
 
   if (status === 'success') {
@@ -548,6 +574,29 @@ function OdemeContent() {
   // Sprint C P3: payment mode (paymentDisabled | paymentSandbox | paymentLive)
   // — separate axis from PaymentState. Used by the sandbox banner.
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('paymentDisabled');
+  // Sprint D P5: admin/test visibility gate for the sandbox flow.
+  // Public default = waitlist. Admin/test appends ?mode=sandbox which is
+  // persisted to sessionStorage so the iyzico redirect doesn't lose context.
+  const [isAdminTestMode, setIsAdminTestMode] = useState<boolean>(false);
+
+  // Sprint D P5: detect ?mode=sandbox or sessionStorage flag on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const queryMode = searchParams.get('mode');
+    const sessionMode = window.sessionStorage.getItem('odeme_mode');
+    if (queryMode === 'sandbox' || sessionMode === 'sandbox') {
+      setIsAdminTestMode(true);
+      // Persist so iyzico redirect preserves the admin-test context
+      if (queryMode === 'sandbox') {
+        window.sessionStorage.setItem('odeme_mode', 'sandbox');
+      }
+    }
+    // Clear flag if user explicitly passes ?mode=public
+    if (queryMode === 'public') {
+      window.sessionStorage.removeItem('odeme_mode');
+      setIsAdminTestMode(false);
+    }
+  }, [searchParams]);
 
   // Fetch /api/health to determine payment state (Sprint B: state machine wiring)
   useEffect(() => {
@@ -634,10 +683,17 @@ function OdemeContent() {
     return <ComingSoon />;
   }
 
-  // Payment flow (ready_sandbox or ready_production)
+  // Sprint D P5: Public sandbox users see the waitlist (EarlyAccessForm).
+  // Admins/testers who explicitly pass ?mode=sandbox see the Sprint C 3-step
+  // iyzico flow. This avoids showing "enter test card" to random visitors.
+  if (paymentMode === 'paymentSandbox' && !isAdminTestMode) {
+    return <WaitlistVariant />;
+  }
+
+  // Payment flow (ready_sandbox with admin test or ready_production)
   return (
     <>
-      {/* Sprint C P3: sandbox disclosure banner */}
+      {/* Sprint C P3: sandbox disclosure banner — admin/test path only */}
       {paymentMode === 'paymentSandbox' && (
         <div
           className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-amber-200"
@@ -689,14 +745,57 @@ function OdemeContent() {
         />
       )}
 
-      {/* Dev-only state indicator (Sprint B + C: shows mode + state) */}
+      {/* Dev-only state indicator (Sprint B + C + D: shows mode + state + adminTest) */}
       {process.env.NODE_ENV !== 'production' && (
         <div className="mt-8 text-center text-xs text-gray-600">
           <code>
-            mode: {paymentMode} | state: {paymentState.name}
+            mode: {paymentMode} | state: {paymentState.name} | adminTest:{' '}
+            {String(isAdminTestMode)}
           </code>
         </div>
       )}
+    </>
+  );
+}
+
+/** Sprint D P5 — Public waitlist variant shown when paymentMode === paymentSandbox
+ *  AND !isAdminTestMode. Replaces Sprint C's amber-banner-plus-checkout flow
+ *  for public visitors. Admins/testers still reach the checkout via ?mode=sandbox. */
+function WaitlistVariant() {
+  return (
+    <>
+      <div
+        className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-amber-200"
+        role="note"
+        aria-label="Public beta waitlist notice"
+      >
+        <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-300" />
+        <div className="text-sm leading-relaxed">
+          <p className="font-semibold text-amber-100">
+            🧪 Public Beta — Ödeme henüz aktif değil
+          </p>
+          <p className="mt-1 text-amber-200/90">
+            Araç Karar Motoru şu anda sınırlı public beta'dayız. Gerçek
+            ödeme henüz açılmadı. Aşağıdaki formu doldurun, ödeme
+            sistemimiz aktif olduğunda size haber verelim.
+          </p>
+          <p className="mt-2 text-xs text-amber-300/80">
+            Bu süreçte <Link href="/araclar" className="underline">ücretsiz araçlarımızı</Link> kullanmaya devam edebilirsiniz.
+          </p>
+        </div>
+      </div>
+
+      <EarlyAccessForm source="odeme" defaultIlgi="tekli" />
+
+      <div className="mt-6 text-center">
+        <Link
+          href="/araclar"
+          className="inline-flex items-center gap-2 text-orange-400 hover:text-orange-300 font-medium"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Ücretsiz Araçlara Dön
+        </Link>
+      </div>
     </>
   );
 }

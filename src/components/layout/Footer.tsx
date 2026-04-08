@@ -1,9 +1,15 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
-import { Mail } from "lucide-react";
+import { Mail, AlertTriangle } from "lucide-react";
+// Sprint D P6 — public beta disclosure (shared hook with Header)
+import { usePublicBeta } from "@/lib/hooks/usePublicBeta";
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  // Sprint D P6 — disclosure block is visible when publicBetaMode=true
+  const isBeta = usePublicBeta();
 
   const footerLinks = [
     { label: "Hakkımızda", href: "/hakkimizda" },
@@ -58,6 +64,38 @@ const Footer: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Sprint D P6 — Public Beta disclosure block */}
+        {isBeta && (
+          <div className="mb-8 rounded-lg border border-orange-400/40 bg-orange-500/10 p-5">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0 text-orange-300 mt-0.5" />
+              <div className="text-sm leading-relaxed">
+                <p className="font-semibold text-orange-200">
+                  🧪 Public Beta
+                </p>
+                <p className="mt-1 text-blue-100/90">
+                  Araç Karar Motoru şu anda public beta'da. Ödeme sistemi
+                  sandbox modunda, gerçek tahsilat yapılmıyor. Bazı veriler
+                  yaklaşık ya da bayat olabilir (runtime'da{' '}
+                  <code className="font-mono text-xs text-orange-200">/api/data-status.dataFreshness</code>{' '}
+                  ile görülür).
+                </p>
+                <p className="mt-2 text-xs text-blue-200/80">
+                  Detay:{' '}
+                  <a
+                    href="https://github.com/BBBoring2025/arac-karar-motoru/blob/main/docs/public-beta-policy.md"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-orange-300 hover:text-orange-200 underline"
+                  >
+                    Public Beta Policy
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Divider */}
         <div className="border-t border-blue-800 my-8"></div>

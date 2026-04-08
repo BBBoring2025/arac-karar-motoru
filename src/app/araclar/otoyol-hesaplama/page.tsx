@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
 import Select from '@/components/ui/Select';
@@ -9,10 +9,24 @@ import { Zap, Info } from 'lucide-react';
 import { tollData } from '@/data/otoyol';
 import ConfidenceBadge from '@/components/ui/ConfidenceBadge';
 import DataSourceFooter from '@/components/ui/DataSourceFooter';
+// Sprint D P7 — analytics call-site backfill
+import { trackToolOpened, trackCalculation } from '@/lib/analytics';
 
 export default function OtoyolHesaplama() {
   const [selectedRoute, setSelectedRoute] = useState('o1');
   const [selectedVehicleClass, setSelectedVehicleClass] = useState('1');
+
+  // Sprint D P7 — tool_opened + calculation events
+  useEffect(() => {
+    trackToolOpened('otoyol');
+  }, []);
+
+  useEffect(() => {
+    trackCalculation('otoyol', {
+      route: selectedRoute,
+      vehicleClass: selectedVehicleClass,
+    });
+  }, [selectedRoute, selectedVehicleClass]);
   const [selectedGateSystem, setSelectedGateSystem] = useState('hgs');
   const [monthlyPassages, setMonthlyPassages] = useState('4');
 
@@ -134,30 +148,24 @@ export default function OtoyolHesaplama() {
           )}
         </Card>
 
-        <Card className="mb-8 bg-blue-50 border border-blue-200">
-          <div className="flex gap-3">
-            <Info className="w-5 h-5 text-blue-900 mt-1 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-blue-900 mb-2">Bilgilendirme</h3>
-              <p className="text-sm text-blue-900 mb-3">
-                <strong>Kaynak:</strong> KGM 2026 Tarifeleri
-              </p>
-              <p className="text-sm text-blue-900 mb-3">
-                Köprü ve tünel ücretleri sabit tarifedir (HGS/OGS ayrımı yoktur). Otoyol ücretleri gişe-gişe mesafeye göre değişir, yukarıdaki değerler tahminidir.
-              </p>
-              <ul className="list-disc pl-5 space-y-1 text-xs text-blue-900">
-                <li>Araç Sınıfı 1: Otomobil, SUV, Coupe</li>
-                <li>Araç Sınıfı 2: Minibüs (7-8 kişi)</li>
-                <li>Araç Sınıfı 3: Otobüs (9+ kişi)</li>
-                <li>Araç Sınıfı 4: Kamyonet, Pickup</li>
-                <li>Araç Sınıfı 5: Kamyon/Tır (&gt;3.5 ton)</li>
-                <li className="text-red-700 font-medium">Avrasya Tüneli: 3, 4, 5. sınıf araçlar geçemez</li>
-              </ul>
-            </div>
-          </div>
-        </Card>
+        {/* Sprint D P11: Hardcoded "Bilgilendirme" Card removed.
+            Vehicle class legend preserved as compact prose. */}
+        <div className="mb-4 text-sm text-slate-600">
+          <p className="mb-2">
+            Köprü ve tünel ücretleri sabit tarifedir (HGS/OGS ayrımı yoktur).
+            Otoyol segment ücretleri gişe-gişe mesafeye göre değişebilir.
+          </p>
+          <ul className="list-disc pl-5 space-y-0.5 text-xs text-slate-500">
+            <li>Araç Sınıfı 1: Otomobil, SUV, Coupe</li>
+            <li>Araç Sınıfı 2: Minibüs (7-8 kişi)</li>
+            <li>Araç Sınıfı 3: Otobüs (9+ kişi)</li>
+            <li>Araç Sınıfı 4: Kamyonet, Pickup</li>
+            <li>Araç Sınıfı 5: Kamyon/Tır (&gt;3.5 ton)</li>
+            <li className="text-red-600 font-medium">Avrasya Tüneli: 3, 4, 5. sınıf araçlar geçemez</li>
+          </ul>
+        </div>
 
-        {/* Sprint C P7: data manifest footer */}
+        {/* Sprint C P7 + D P11: data manifest footer — single source of truth */}
         <DataSourceFooter manifestKey="otoyol-segments" />
 
         <Card variant="highlighted" className="cursor-pointer hover:shadow-lg">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
 import Select from '@/components/ui/Select';
@@ -8,11 +8,26 @@ import { Zap, Info } from 'lucide-react';
 import { inspectionData } from '@/data/muayene';
 import ConfidenceBadge from '@/components/ui/ConfidenceBadge';
 import DataSourceFooter from '@/components/ui/DataSourceFooter';
+// Sprint D P7 — analytics call-site backfill
+import { trackToolOpened, trackCalculation } from '@/lib/analytics';
 
 export default function MuayeneUcreti() {
   const [selectedVehicleType, setSelectedVehicleType] = useState('otomobil');
   const [selectedInspectionType, setSelectedInspectionType] = useState('Periyodik Muayene (1-3 yaş)');
   const [vehicleAge, setVehicleAge] = useState('2');
+
+  // Sprint D P7 — tool_opened + calculation events
+  useEffect(() => {
+    trackToolOpened('muayene');
+  }, []);
+
+  useEffect(() => {
+    trackCalculation('muayene', {
+      vehicleType: selectedVehicleType,
+      inspectionType: selectedInspectionType,
+      vehicleAge,
+    });
+  }, [selectedVehicleType, selectedInspectionType, vehicleAge]);
 
   const selectedVehicle = useMemo(() => {
     return inspectionData.vehicleTypes.find(v => v.id === selectedVehicleType);
@@ -136,28 +151,22 @@ export default function MuayeneUcreti() {
           </div>
         </Card>
 
-        <Card className="mb-8 bg-blue-50 border border-blue-200">
-          <div className="flex gap-3">
-            <Info className="w-5 h-5 text-blue-900 mt-1 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-blue-900 mb-2">Bilgilendirme</h3>
-              <p className="text-sm text-blue-900 mb-3">
-                <strong>Kaynak:</strong> TÜVTÜRK 2026 Tarifesi
-              </p>
-              <p className="text-sm text-blue-900 mb-3">
-                Motorlu Taşıtlar Muayenesi, araçların teknik şartlarını ve emisyon ölçümlerini kontrol eden zorunlu bir prosedürdür. Muayene başarısız olan araçlar için tekrar muayene ücretinin ödenmesi gerekir.
-              </p>
-              <ul className="list-disc pl-5 space-y-1 text-xs text-blue-900">
-                <li>İlk muayene: Yeni araçlar için yapılan ilk muayene</li>
-                <li>Periyodik muayene: Düzenli aralıklarla yapılan muayene</li>
-                <li>Tekrar muayene: Başarısız olan araçlar için tekrarlanan muayene</li>
-                <li>Egzoz ölçüm: Emisyon standartlarının kontrolü</li>
-              </ul>
-            </div>
-          </div>
-        </Card>
+        {/* Sprint D P11: Hardcoded "Bilgilendirme" Card removed.
+            Compact muayene-types note preserved as prose. */}
+        <div className="mb-4 text-sm text-slate-600">
+          <p className="mb-2">
+            Motorlu Taşıtlar Muayenesi, araçların teknik şartlarını ve
+            emisyon ölçümlerini kontrol eden zorunlu bir prosedürdür.
+          </p>
+          <ul className="list-disc pl-5 space-y-0.5 text-xs text-slate-500">
+            <li>İlk muayene: Yeni araçlar için yapılan ilk muayene</li>
+            <li>Periyodik muayene: Düzenli aralıklarla yapılan muayene</li>
+            <li>Tekrar muayene: Başarısız olan araçlar için tekrarlanan muayene</li>
+            <li>Egzoz ölçüm: Emisyon standartlarının kontrolü</li>
+          </ul>
+        </div>
 
-        {/* Sprint C P7: data manifest footer */}
+        {/* Sprint C P7 + D P11: data manifest footer — single source of truth */}
         <DataSourceFooter manifestKey="muayene" />
 
         <Card variant="highlighted" className="cursor-pointer hover:shadow-lg">

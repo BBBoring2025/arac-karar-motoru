@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
 import Select from '@/components/ui/Select';
@@ -9,6 +9,8 @@ import { Zap, Info } from 'lucide-react';
 import { fuelData } from '@/data/yakit';
 import ConfidenceBadge from '@/components/ui/ConfidenceBadge';
 import DataSourceFooter from '@/components/ui/DataSourceFooter';
+// Sprint D P7 — analytics call-site backfill
+import { trackToolOpened, trackCalculation } from '@/lib/analytics';
 
 export default function YakitHesaplama() {
   const [inputMode, setInputMode] = useState<'vehicle' | 'manual'>('vehicle');
@@ -19,6 +21,20 @@ export default function YakitHesaplama() {
   const [fuelPrice, setFuelPrice] = useState('44.25');
   // Sprint C P11: track if user has manually edited the price
   const [priceOverridden, setPriceOverridden] = useState(false);
+
+  // Sprint D P7 — tool_opened event on mount
+  useEffect(() => {
+    trackToolOpened('yakit');
+  }, []);
+
+  // Sprint D P7 — calculation_completed when user changes inputs (debounced via useMemo deps)
+  useEffect(() => {
+    trackCalculation('yakit', {
+      fuelType,
+      inputMode,
+      priceOverridden,
+    });
+  }, [fuelType, inputMode, priceOverridden]);
 
   const selectedVehicleData = useMemo(() => {
     return fuelData.vehicleConsumption.find(v => v.id === selectedVehicle);
@@ -243,22 +259,18 @@ export default function YakitHesaplama() {
           </div>
         </Card>
 
-        <Card className="mb-8 bg-blue-50 border border-blue-200">
-          <div className="flex gap-3">
-            <Info className="w-5 h-5 text-blue-900 mt-1 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-blue-900 mb-2">Bilgilendirme</h3>
-              <p className="text-sm text-blue-900">
-                <strong>Kaynak:</strong> PETDER 2026 Fiyatları
-              </p>
-              <p className="text-sm text-blue-900">
-                Yakıt maliyeti hesaplaması, giriş yapılan tüketim verileri ve güncel yakıt fiyatlarına dayanmaktadır. Gerçek harcamalar sürüş koşullarına göre değişiklik gösterebilir.
-              </p>
-            </div>
-          </div>
-        </Card>
+        {/* Sprint D P11: Hardcoded "Bilgilendirme" Card removed.
+            Sprint C P11 "Sizin fiyatınız" / "Referans (PETDER)" override
+            semantics preserved above in the fuel price input. */}
+        <div className="mb-4 text-sm text-slate-600">
+          <p>
+            Yakıt maliyeti hesaplaması, giriş yapılan tüketim verileri ve
+            referans yakıt fiyatına dayanır. Gerçek harcamalar sürüş
+            koşullarına göre değişebilir.
+          </p>
+        </div>
 
-        {/* Sprint C P7: data manifest footer */}
+        {/* Sprint C P7 + D P11: data manifest footer — single source of truth */}
         <DataSourceFooter manifestKey="yakit" />
 
         <Card variant="highlighted" className="cursor-pointer hover:shadow-lg">

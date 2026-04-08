@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
 import Select from '@/components/ui/Select';
@@ -8,6 +8,8 @@ import { Zap, Info } from 'lucide-react';
 import { mtvData } from '@/data/mtv';
 import ConfidenceBadge from '@/components/ui/ConfidenceBadge';
 import DataSourceFooter from '@/components/ui/DataSourceFooter';
+// Sprint D P7 — analytics call-site backfill
+import { trackToolOpened, trackCalculation } from '@/lib/analytics';
 
 const engineSizes = ['1-1300cc', '1301-1600cc', '1601-1800cc', '1801-2000cc', '2001-2500cc', '2501-3000cc', '3001-3500cc', '3501-4000cc', '4001cc+'];
 const fuelTypes = ['Benzin', 'Dizel', 'LPG', 'Hibrit', 'Elektrik'];
@@ -18,6 +20,20 @@ export default function MTVHesaplama() {
   const [selectedEngine, setSelectedEngine] = useState('1601-1800cc');
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());
   const [selectedFuel, setSelectedFuel] = useState('Benzin');
+
+  // Sprint D P7 — tool_opened event on mount (once per mount)
+  useEffect(() => {
+    trackToolOpened('mtv');
+  }, []);
+
+  // Sprint D P7 — calculation_completed on every selector change
+  useEffect(() => {
+    trackCalculation('mtv', {
+      engine: selectedEngine,
+      year: selectedYear,
+      fuel: selectedFuel,
+    });
+  }, [selectedEngine, selectedYear, selectedFuel]);
 
   const calculateMTV = useMemo(() => {
     const year = parseInt(selectedYear);
@@ -164,37 +180,26 @@ export default function MTVHesaplama() {
           </div>
         </Card>
 
-        <Card className="mb-8 bg-blue-50 border border-blue-200">
-          <div className="flex gap-3">
-            <Info className="w-5 h-5 text-blue-900 mt-1 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-blue-900 mb-2">Bilgilendirme</h3>
-              <p className="text-sm text-blue-900 mb-2">
-                <strong>Kaynak:</strong> GİB MTV tarife yapısı (2026 başlangıç snapshot)
-              </p>
-              <p className="text-sm text-blue-900 mb-2">
-                MTV (Motorlu Taşıtlar Vergisi), her yıl ödenmesi gereken bir vergidir.
-                Motor hacmi, yakıt tipi ve aracın yaşı tutarı belirler.
-                Elektrikli araçlar 2026 itibarıyla MTV&apos;den muaftır.
-              </p>
-              <p className="text-sm text-blue-900">
-                <strong>Önemli:</strong> Bu hesap aracı tarife yapısını uygular ancak
-                tarifeler yıl içinde güncellenebilir. Ödeme yapmadan önce her zaman{' '}
-                <a
-                  href="https://dijital.gib.gov.tr/hesaplamalar/MTVHesaplama"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline font-medium"
-                >
-                  GİB&apos;in resmi MTV Hesaplama aracını
-                </a>{' '}
-                kullanarak doğrulayın.
-              </p>
-            </div>
-          </div>
-        </Card>
+        {/* Sprint D P11: Hardcoded "Bilgilendirme" Card removed —
+            DataSourceFooter is now the single source of truth for source metadata.
+            The GİB verification link is preserved as a compact note below. */}
+        <div className="mb-4 text-sm text-slate-600">
+          <p>
+            <strong>Önemli:</strong> Tarifeler yıl içinde güncellenebilir.
+            Ödeme yapmadan önce{' '}
+            <a
+              href="https://dijital.gib.gov.tr/hesaplamalar/MTVHesaplama"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-orange-600 hover:text-orange-700 underline font-medium"
+            >
+              GİB&apos;in resmi MTV Hesaplama aracını
+            </a>{' '}
+            kullanarak doğrulayın. Elektrikli araçlar 2026 itibarıyla MTV&apos;den muaftır.
+          </p>
+        </div>
 
-        {/* Sprint C P7: data manifest footer */}
+        {/* Sprint C P7 + D P11: data manifest footer — single source of truth */}
         <DataSourceFooter manifestKey="mtv" />
 
         <Card variant="highlighted" className="cursor-pointer hover:shadow-lg">

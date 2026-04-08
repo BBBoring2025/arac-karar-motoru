@@ -48,8 +48,9 @@ export interface Flags {
   adminWriteEnabled: FlagState;
 
   /**
-   * Analytics (GA4 or Plausible) — client-side flag.
-   * Server returns `unknown` reason because it can't inspect `window.gtag`.
+   * Analytics — Plausible only (Sprint D P7).
+   * Server reads NEXT_PUBLIC_PLAUSIBLE_DOMAIN env var for authoritative answer.
+   * Client helper also checks window.plausible presence as a backup.
    */
   analyticsEnabled: FlagState;
 
@@ -58,6 +59,13 @@ export interface Flags {
 
   /** PDF report generation (jspdf + autotable) — always enabled, no env gate */
   pdfEnabled: FlagState;
+
+  /**
+   * Sprint D P1 — Public Beta Mode.
+   * Fail-safe TRUE by default. Set PUBLIC_BETA_MODE='false' in Vercel to explicitly
+   * launch the product out of beta. Any other value (including missing) = beta on.
+   */
+  publicBetaMode: FlagState;
 }
 
 export interface ClientFlagHints {
@@ -93,12 +101,28 @@ export function getServerFlags(): Flags {
         missingVars: ['SUPABASE_SERVICE_ROLE_KEY'],
       };
 
-  // Analytics — server cannot know if client-side provider is loaded.
-  // Always returns `unknown` reason on the server; true state is determined client-side.
-  const analyticsFlag: FlagState = {
-    enabled: false,
-    reason: 'unknown',
-  };
+  // Analytics — Sprint D P7: server reads NEXT_PUBLIC_PLAUSIBLE_DOMAIN env var.
+  // The client-side Plausible script is loaded conditionally on this env var, so
+  // server knowing the env var presence is the authoritative answer.
+  // If the env var is missing, analytics is honestly disabled with reason='missing_env'.
+  const plausibleDomain = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
+  const analyticsFlag: FlagState =
+    plausibleDomain && plausibleDomain.trim().length > 0
+      ? { enabled: true, reason: 'ok' }
+      : {
+          enabled: false,
+          reason: 'missing_env',
+          missingVars: ['NEXT_PUBLIC_PLAUSIBLE_DOMAIN'],
+        };
+
+  // Sprint D P1 — publicBetaMode.
+  // Default TRUE (fail-safe) — only explicit 'false' disables it.
+  // Protects against accidental "launch" when env var is missing.
+  const betaValue = process.env.PUBLIC_BETA_MODE;
+  const publicBetaEnabled = betaValue !== 'false';
+  const publicBetaFlag: FlagState = publicBetaEnabled
+    ? { enabled: true, reason: 'ok' }
+    : { enabled: false, reason: 'disabled_by_flag' };
 
   return {
     paymentEnabled: paymentFlag,
@@ -106,6 +130,7 @@ export function getServerFlags(): Flags {
     analyticsEnabled: analyticsFlag,
     routeV3Enabled: { enabled: true, reason: 'ok' },
     pdfEnabled: { enabled: true, reason: 'ok' },
+    publicBetaMode: publicBetaFlag,
   };
 }
 
@@ -131,6 +156,8 @@ export function getClientFlags(hints: ClientFlagHints): Flags {
     analyticsEnabled: analyticsFlag,
     routeV3Enabled: { enabled: true, reason: 'ok' },
     pdfEnabled: { enabled: true, reason: 'ok' },
+    // Sprint D P1 — client-side default fail-safe TRUE (will be confirmed via /api/health fetch)
+    publicBetaMode: { enabled: true, reason: 'unknown' },
   };
 }
 
@@ -158,5 +185,6 @@ export function flagsToPublicJSON(f: Flags): PublicFlags {
     analyticsEnabled: strip(f.analyticsEnabled),
     routeV3Enabled: strip(f.routeV3Enabled),
     pdfEnabled: strip(f.pdfEnabled),
+    publicBetaMode: strip(f.publicBetaMode),
   };
 }

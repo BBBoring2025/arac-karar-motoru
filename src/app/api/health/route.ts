@@ -21,6 +21,8 @@ import {
   getPaymentMode,
   type PaymentMode,
 } from '@/lib/payment/state-machine';
+// Sprint D P9: data freshness summary
+import { getStaleEntries } from '@/lib/data-manifest';
 
 // Node runtime — iyzipay ve Supabase server SDK consistency için
 export const runtime = 'nodejs';
@@ -40,10 +42,18 @@ interface HealthResponse {
   timestamp: string;
   // Sprint C P12: top-level paymentMode (3 honest modes)
   paymentMode: PaymentMode;
+  // Sprint D P1: top-level publicBetaMode (mirror of flags.publicBetaMode.enabled)
+  publicBetaMode: boolean;
   flags: ReturnType<typeof flagsToPublicJSON>;
   services: {
     supabase: ServiceStatus;
     iyzico: ServiceStatus;
+  };
+  // Sprint D P9: data freshness summary (filled later in P9; default stub until then)
+  dataFreshness?: {
+    staleCount: number;
+    oldestStaleKey?: string;
+    oldestStaleDays?: number;
   };
 }
 
@@ -119,15 +129,32 @@ export async function GET() {
       status = 'degraded';
     }
 
+    // Sprint D P9: data freshness summary (top-level for cheap monitoring).
+    // Stale details are in /api/data-status.dataFreshness.
+    const staleEntries = getStaleEntries();
+    const oldestStale = staleEntries.length > 0
+      ? staleEntries.reduce((oldest, e) =>
+          e.daysSinceUpdate > oldest.daysSinceUpdate ? e : oldest
+        )
+      : null;
+    const dataFreshness = {
+      staleCount: staleEntries.length,
+      oldestStaleKey: oldestStale?.key,
+      oldestStaleDays: oldestStale?.daysSinceUpdate,
+    };
+
     const response: HealthResponse = {
       status,
       timestamp: new Date().toISOString(),
       paymentMode,
+      // Sprint D P1: top-level publicBetaMode (mirror of flags)
+      publicBetaMode: flags.publicBetaMode.enabled,
       flags: flagsToPublicJSON(flags),
       services: {
         supabase: supabaseStatus,
         iyzico: iyzicoStatus,
       },
+      dataFreshness,
     };
 
     return Response.json(response, { status: 200 });
@@ -138,6 +165,7 @@ export async function GET() {
         status: 'fail',
         timestamp: new Date().toISOString(),
         paymentMode: 'paymentDisabled',
+        publicBetaMode: true, // fail-safe default
         error: err instanceof Error ? err.name : 'unknown',
       },
       { status: 200 },

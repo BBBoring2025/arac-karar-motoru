@@ -15,6 +15,8 @@ import {
   getAllManifestEntries,
   getManifestEntry,
   DATA_MANIFEST_KEYS,
+  computeStaleness,
+  getStaleEntries,
   type DataManifestKey,
 } from '../data-manifest';
 
@@ -114,6 +116,117 @@ try {
   threw = true;
 }
 assert(threw, 'getManifestEntry("unknown") throws');
+
+// ═════════════════════════════════════════════════════════════════════
+// Sprint D P8 — Refresh cadence + staleness (25+ assertions)
+// ═════════════════════════════════════════════════════════════════════
+
+const VALID_CADENCES = [
+  'daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'on-publication',
+];
+
+// 6. Every entry has a valid refreshCadence
+console.log('\nSprint D P8 — refreshCadence per entry');
+for (const entry of getAllManifestEntries()) {
+  assert(
+    VALID_CADENCES.includes(entry.refreshCadence),
+    `${entry.key}.refreshCadence is valid (got "${entry.refreshCadence}")`
+  );
+  assert(
+    typeof entry.stale === 'boolean',
+    `${entry.key}.stale is boolean (got ${typeof entry.stale})`
+  );
+  assert(
+    typeof entry.daysSinceUpdate === 'number' && entry.daysSinceUpdate >= 0,
+    `${entry.key}.daysSinceUpdate is non-negative number`
+  );
+  assert(
+    typeof entry.maxDaysForCadence === 'number',
+    `${entry.key}.maxDaysForCadence is number`
+  );
+}
+
+// 7. Computed stale matches (daysSinceUpdate > maxDaysForCadence) rule
+console.log('\nSprint D P8 — stale consistency');
+for (const entry of getAllManifestEntries()) {
+  const expected = entry.maxDaysForCadence === -1
+    ? false // on-publication = never stale
+    : entry.daysSinceUpdate > entry.maxDaysForCadence;
+  assert(
+    entry.stale === expected,
+    `${entry.key}.stale === (daysSinceUpdate > maxDaysForCadence) (stale=${entry.stale}, days=${entry.daysSinceUpdate}, max=${entry.maxDaysForCadence})`
+  );
+}
+
+// 8. Deterministic staleness — pin clock
+console.log('\nSprint D P8 — computeStaleness deterministic');
+{
+  // Case 1: yakit, 2026-01-15, monthly, now=2026-04-09 → 84 days, max 35 → STALE
+  const yakit = computeStaleness(
+    '2026-01-15',
+    'monthly',
+    new Date('2026-04-09T12:00:00Z')
+  );
+  assert(
+    yakit.daysSinceUpdate === 84,
+    `yakit 2026-01-15 → 2026-04-09 = 84 days (got ${yakit.daysSinceUpdate})`
+  );
+  assert(yakit.stale === true, 'yakit monthly cadence at 84 days → stale');
+  assert(
+    yakit.maxDaysForCadence === 35,
+    `monthly max = 35 (got ${yakit.maxDaysForCadence})`
+  );
+
+  // Case 2: fresh entry, 5 days old, weekly, not stale
+  const fresh = computeStaleness(
+    '2026-04-04',
+    'weekly',
+    new Date('2026-04-09T12:00:00Z')
+  );
+  assert(fresh.stale === false, 'weekly at 5 days → not stale');
+  assert(fresh.daysSinceUpdate === 5, `5 days (got ${fresh.daysSinceUpdate})`);
+
+  // Case 3: 100 days + monthly → stale
+  const old = computeStaleness(
+    '2026-01-01',
+    'monthly',
+    new Date('2026-04-11T00:00:00Z')
+  );
+  assert(old.stale === true, 'monthly at 100 days → stale');
+
+  // Case 4: on-publication never stales
+  const neverStale = computeStaleness(
+    '2024-01-01',
+    'on-publication',
+    new Date('2026-04-09T00:00:00Z')
+  );
+  assert(neverStale.stale === false, 'on-publication never stales');
+  assert(
+    neverStale.maxDaysForCadence === -1,
+    'on-publication max = -1 (sentinel)'
+  );
+}
+
+// 9. getStaleEntries() sanity (yakit must be stale as of "today")
+console.log('\nSprint D P8 — getStaleEntries() runtime check');
+{
+  const stale = getStaleEntries();
+  assert(
+    stale.length >= 1,
+    `at least 1 stale entry (got ${stale.length})`
+  );
+  const yakitEntry = stale.find((e) => e.key === 'yakit');
+  assert(
+    yakitEntry !== undefined,
+    `yakit is in getStaleEntries() (runtime — depends on "now")`
+  );
+  if (yakitEntry) {
+    assert(
+      yakitEntry.refreshCadence === 'monthly',
+      `yakit.refreshCadence === 'monthly'`
+    );
+  }
+}
 
 console.log('\n==================================================');
 console.log(`Sonuç: ${passed} geçti, ${failed} kaldı`);
