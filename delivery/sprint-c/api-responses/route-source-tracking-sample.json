@@ -1,0 +1,167 @@
+{
+  "startDistrict": {
+    "id": "34-kadikoy",
+    "il": "Istanbul",
+    "ilce": "Kadikoy",
+    "plaka": 34,
+    "lat": 40.9927,
+    "lng": 29.027,
+    "anchorId": "istanbul"
+  },
+  "endDistrict": {
+    "id": "06-cankaya",
+    "il": "Ankara",
+    "ilce": "Cankaya",
+    "plaka": 6,
+    "lat": 39.9208,
+    "lng": 32.8541,
+    "anchorId": "ankara"
+  },
+  "oneWay": {
+    "distanceKm": 483.7,
+    "durationMin": 371,
+    "fuelLiters": 36.28,
+    "fuelCost": 1605,
+    "tollCost": 93,
+    "totalCost": 1698,
+    "costPerKm": 3.51
+  },
+  "roundTrip": {
+    "distanceKm": 967.4,
+    "durationMin": 742,
+    "fuelLiters": 72.56,
+    "fuelCost": 3211,
+    "tollCost": 186,
+    "totalCost": 3397,
+    "costPerKm": 3.51
+  },
+  "confidence": "tahmini",
+  "path": {
+    "nodeIds": [
+      "istanbul",
+      "istanbul-anadolu",
+      "gebze",
+      "izmit-otoyol",
+      "bolu-dagi",
+      "bolu",
+      "ankara"
+    ],
+    "edges": [
+      {
+        "id": "edge-istanbul-istanbul-anadolu",
+        "from": "istanbul",
+        "to": "istanbul-anadolu",
+        "distanceKm": 15,
+        "durationMin": 20,
+        "roadType": "serbest",
+        "tollSegmentIds": [],
+        "bidirectional": true,
+        "confidence": "kesin"
+      },
+      {
+        "id": "edge-istanbul-anadolu-gebze",
+        "from": "istanbul-anadolu",
+        "to": "gebze",
+        "distanceKm": 55,
+        "durationMin": 50,
+        "roadType": "ücretli",
+        "tollSegmentIds": [
+          "o4-istanbul-gebze"
+        ],
+        "bidirectional": true,
+        "confidence": "kesin"
+      },
+      {
+        "id": "edge-gebze-izmit-otoyol",
+        "from": "gebze",
+        "to": "izmit-otoyol",
+        "distanceKm": 45,
+        "durationMin": 35,
+        "roadType": "ücretli",
+        "tollSegmentIds": [
+          "o4-gebze-izmit"
+        ],
+        "bidirectional": true,
+        "confidence": "kesin"
+      },
+      {
+        "id": "edge-izmit-otoyol-bolu-dagi",
+        "from": "izmit-otoyol",
+        "to": "bolu-dagi",
+        "distanceKm": 120,
+        "durationMin": 80,
+        "roadType": "ücretli",
+        "tollSegmentIds": [
+          "o4-izmit-bolu"
+        ],
+        "bidirectional": true,
+        "confidence": "kesin"
+      },
+      {
+        "id": "edge-bolu-dagi-bolu",
+        "from": "bolu-dagi",
+        "to": "bolu",
+        "distanceKm": 50,
+        "durationMin": 35,
+        "roadType": "ücretli",
+        "tollSegmentIds": [],
+        "bidirectional": true,
+        "confidence": "kesin"
+      },
+      {
+        "id": "edge-ankara-bolu-serbest",
+        "from": "ankara",
+        "to": "bolu",
+        "distanceKm": 190,
+        "durationMin": 140,
+        "roadType": "serbest",
+        "tollSegmentIds": [],
+        "bidirectional": true,
+        "confidence": "tahmini"
+      }
+    ]
+  },
+  "tollBreakdown": [
+    {
+      "segmentId": "o4-istanbul-gebze",
+      "name": "O-4 İstanbul-Gebze",
+      "type": "otoyol",
+      "amount": 20,
+      "confidence": "tahmini",
+      "sourceLabel": "KGM 2026 Tarifesi",
+      "sourceUrl": "https://www.kgm.gov.tr/Sayfalar/KGM/SiteEng/Root/Otoyollar.aspx"
+    },
+    {
+      "segmentId": "o4-gebze-izmit",
+      "name": "O-4 Gebze-İzmit",
+      "type": "otoyol",
+      "amount": 18,
+      "confidence": "tahmini",
+      "sourceLabel": "KGM 2026 Tarifesi",
+      "sourceUrl": "https://www.kgm.gov.tr/Sayfalar/KGM/SiteEng/Root/Otoyollar.aspx"
+    },
+    {
+      "segmentId": "o4-izmit-bolu",
+      "name": "O-4 İzmit-Bolu",
+      "type": "otoyol",
+      "amount": 55,
+      "confidence": "tahmini",
+      "sourceLabel": "KGM 2026 Tarifesi",
+      "sourceUrl": "https://www.kgm.gov.tr/Sayfalar/KGM/SiteEng/Root/Otoyollar.aspx"
+    }
+  ],
+  "metadata": {
+    "calculatedAt": "2026-04-08T17:14:17.435Z",
+    "fuelConsumption": 7.5,
+    "fuelPrice": 44.25,
+    "fuelType": "benzin",
+    "vehicleClass": "1"
+  },
+  "pathDistanceSource": "mixed",
+  "tollSource": "estimated_segment",
+  "districtOffsetSource": {
+    "type": "haversine_multiplier",
+    "multiplier": 1.5
+  },
+  "fuelPriceSource": "reference_country"
+}

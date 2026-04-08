@@ -1,0 +1,11 @@
+Sprint C P12 — getPaymentMode() decision trail (9 input combinations)
+
+{"paymentEnabled":false,"iyzicoMode":null} → paymentDisabled
+{"paymentEnabled":false,"iyzicoMode":"sandbox"} → paymentDisabled
+{"paymentEnabled":false,"iyzicoMode":"production"} → paymentDisabled
+{"paymentEnabled":true,"iyzicoMode":null} → paymentDisabled
+{"paymentEnabled":true,"iyzicoMode":"sandbox"} → paymentSandbox
+{"paymentEnabled":true,"iyzicoMode":"production"} → paymentLive
+{"paymentEnabled":true,"iyzicoMode":"disabled"} → paymentDisabled
+{"paymentEnabled":true} → paymentDisabled
+{"paymentEnabled":false,"iyzicoMode":"disabled"} → paymentDisabled

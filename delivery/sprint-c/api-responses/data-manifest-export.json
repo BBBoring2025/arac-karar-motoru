@@ -1,0 +1,103 @@
+{
+  "mtv": {
+    "key": "mtv",
+    "label": "MTV Tarifeleri",
+    "sourceLabel": "GİB (Gelir İdaresi Başkanlığı) 2026 MTV Tebliği",
+    "sourceUrl": "https://www.gib.gov.tr",
+    "effectiveDate": "2026-01-01",
+    "lastUpdated": "2026-01-01",
+    "confidence": "kesin",
+    "filePath": "src/data/mtv.ts",
+    "itemCount": 33,
+    "runbookAnchor": "#mtv"
+  },
+  "muayene": {
+    "key": "muayene",
+    "label": "Muayene Ücretleri",
+    "sourceLabel": "TÜVTÜRK 2026 Muayene Ücret Tarifesi",
+    "sourceUrl": "https://www.tuvturk.com.tr",
+    "effectiveDate": "2026-01-01",
+    "lastUpdated": "2026-01-01",
+    "confidence": "kesin",
+    "filePath": "src/data/muayene.ts",
+    "itemCount": 8,
+    "runbookAnchor": "#muayene"
+  },
+  "yakit": {
+    "key": "yakit",
+    "label": "Yakıt Fiyatları",
+    "sourceLabel": "PETDER Akaryakıt Fiyat Ortalamaları",
+    "sourceUrl": "https://www.petder.org.tr",
+    "effectiveDate": "2026-01-15",
+    "lastUpdated": "2026-01-15",
+    "confidence": "yaklaşık",
+    "notes": "Fiyatlar referans niteliğindedir. Güncel pompa fiyatları farklılık gösterebilir.",
+    "filePath": "src/data/yakit.ts",
+    "itemCount": 4,
+    "runbookAnchor": "#yakit"
+  },
+  "otoyol-routes": {
+    "key": "otoyol-routes",
+    "label": "Otoyol Tarifeleri (route-based, eski)",
+    "sourceLabel": "KGM 2026 HGS/OGS Ücret Tarifesi",
+    "sourceUrl": "https://www.kgm.gov.tr",
+    "effectiveDate": "2026-01-01",
+    "lastUpdated": "2026-04-05",
+    "confidence": "kesin",
+    "notes": "Rota bazlı eski format. Yeni rota motoru toll-segments.ts kullanır.",
+    "filePath": "src/data/otoyol.ts",
+    "itemCount": 13,
+    "runbookAnchor": "#otoyol-routes"
+  },
+  "otoyol-segments": {
+    "key": "otoyol-segments",
+    "label": "Otoyol/Köprü Segmentleri (route engine)",
+    "sourceLabel": "KGM 2026 Resmi Tarifesi (köprüler) + tahmini segmentler",
+    "sourceUrl": "https://www.kgm.gov.tr",
+    "effectiveDate": "2026-01-01",
+    "lastUpdated": "2026-04-05",
+    "confidence": "kesin",
+    "notes": "Köprü ve tünel ücretleri KGM resmi tarifesinden, otoyol segmentleri tahmini.",
+    "filePath": "src/data/routes/toll-segments.ts",
+    "itemCount": 18,
+    "runbookAnchor": "#otoyol-segments"
+  },
+  "araclar": {
+    "key": "araclar",
+    "label": "Araç Veritabanı",
+    "sourceLabel": "OYDER (Otomotiv Distribütörleri ve Mobilite Derneği) ve üretici verileri",
+    "sourceUrl": "https://www.oyder.org.tr",
+    "effectiveDate": "2026-04-05",
+    "lastUpdated": "2026-04-05",
+    "confidence": "yüksek",
+    "notes": "Fiyatlar sıfır km liste fiyatlarıdır, bayii fiyatları farklılık gösterebilir. Tüketim değerleri WLTP test sonuçlarına dayanır.",
+    "filePath": "src/data/araclar.ts",
+    "itemCount": 161,
+    "runbookAnchor": "#araclar"
+  },
+  "noter": {
+    "key": "noter",
+    "label": "Noter Ücretleri",
+    "sourceLabel": "Adalet Bakanlığı 2026 Noter Ücret Tarifesi",
+    "sourceUrl": "https://www.noterlerbirligi.org.tr",
+    "effectiveDate": "2026-01-01",
+    "lastUpdated": "2026-01-01",
+    "confidence": "kesin",
+    "filePath": "src/data/noter.ts",
+    "itemCount": 11,
+    "runbookAnchor": "#noter"
+  },
+  "amortisman": {
+    "key": "amortisman",
+    "label": "Amortisman Oranları",
+    "sourceLabel": "OYDER Sektör Verileri ve İkinci El Pazar Analizi",
+    "sourceUrl": "https://www.oyder.org.tr",
+    "effectiveDate": "2026-01-15",
+    "lastUpdated": "2026-01-15",
+    "confidence": "tahmini",
+    "notes": "Değer kaybı oranları sektör ortalamaları baz alınmıştır. Gerçek değer kaybı araca, kullanıma ve pazar koşullarına göre değişir.",
+    "filePath": "src/data/amortisman.ts",
+    "itemCount": 6,
+    "runbookAnchor": "#amortisman"
+  }
+}
