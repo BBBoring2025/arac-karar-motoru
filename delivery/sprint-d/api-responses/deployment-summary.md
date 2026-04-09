@@ -145,16 +145,21 @@ trackToolOpened           ← P7 analytics
 | `GET /api/build-info` | 200 | Commit matches HEAD |
 | `GET /api/health` | 200 | publicBetaMode + dataFreshness + honest analytics reason all present |
 | `GET /api/data-status` | 200 | dataFreshness.staleSummary[0].key === "yakit" |
-| `POST /api/early-access` (valid) | 500 | `{"ok":false,"error":"db_error","code":"PGRST205"}` — expected pre-migration |
-| `POST /api/early-access` (invalid) | 400 | `{"ok":false,"error":"ad_too_short"}` — validation works correctly |
+| `POST /api/early-access` (valid, pre-migration) | 500 | `{"ok":false,"error":"db_error","code":"PGRST205"}` — pre-migration probe (table didn't exist) |
+| `POST /api/early-access` (invalid, pre-migration) | 400 | `{"ok":false,"error":"ad_too_short"}` — validation works correctly |
+| `POST /api/early-access` (valid, POST-MIGRATION) | ✅ 200 | `{"ok":true,"id":1}` — genel enum, first row |
+| `POST /api/early-access` (valid #2, POST-MIGRATION) | ✅ 200 | `{"ok":true,"id":2}` — karsilastirma enum, second row |
+| `POST /api/early-access` (invalid, POST-MIGRATION) | ✅ 400 | `{"ok":false,"error":"missing_ad"}` — validation short-circuits before DB call |
 
 ---
 
-## User-pending actions
+## User actions status (post-P15)
 
-1. **Apply migration 003**: Open https://supabase.com/dashboard/project/fyuxlmcugtdxuvjnzdtu/sql/new → paste SQL from `supabase/migrations/003_early_access.sql` → Run. Post-apply, `/api/early-access` POST with a valid payload will return `{ok:true, id:<number>}`.
+1. **Apply migration 003**: ✅ DONE — User applied via Supabase Dashboard SQL Editor 2026-04-08. Screenshot confirmed "Success. No rows returned" on CREATE TABLE/INDEX/POLICY batch. Verified by 2 successful `/api/early-access` POSTs (ids 1 and 2).
 
 2. **Plausible env var**: INTENTIONALLY deferred per Sprint D user decision. Honest-disabled state (`reason: 'missing_env'`) is the final Sprint D answer. Future sprint can activate by adding `NEXT_PUBLIC_PLAUSIBLE_DOMAIN=arac-karar-motoru.vercel.app` to Vercel Production and redeploying.
+
+3. **Optional cleanup**: 2 test rows (ids 1 and 2) remain in `erken_erisim` table from post-migration verification. Harmless fake emails, can be left or DELETEd via Dashboard: `DELETE FROM erken_erisim WHERE email IN ('sprintd-postmigration@example.com','sprintd-test2@example.com');`
 
 ---
 

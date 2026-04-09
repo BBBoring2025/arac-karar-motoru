@@ -2,14 +2,14 @@
 
 **Single source of truth for what's running after Sprint D.**
 
-Last verified: 2026-04-08 (post-P14 deploy)
-Local HEAD: `9371f75752e0b36de191ee55e53e9806310e3206`
-Production commit: `9371f75752e0b36de191ee55e53e9806310e3206` (matches HEAD ✓)
+Last verified: 2026-04-09 (post-P15 migration apply + final verification)
+Local HEAD: `9371f75752e0b36de191ee55e53e9806310e3206` (code) + `57a6150` (docs) + this commit (post-migration proof)
+Production commit: `9371f75752e0b36de191ee55e53e9806310e3206` (matches code HEAD ✓)
 Production deployment: `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` (READY)
 Previous: `delivery/sprint-c/runtime-status.md` (c34193a, dpl_4Go7mVr4dTV1X5R83N7LEPSoj66h)
 Live URL: https://arac-karar-motoru.vercel.app
 
-**Status**: ✅ Sprint D deployed to production. All endpoints verified except `/api/early-access` which requires migration 003 to be applied (user action). Plausible env var intentionally not set — analytics honest-disabled state is the Sprint D final decision.
+**Status**: ✅ **SPRINT D FULLY CLOSED.** All 14 phases complete and verified in production. Migration 003 applied by user via Supabase Dashboard (2026-04-08). `/api/early-access` POST verified with 2 successful insertions (ids 1 and 2) + validation layer re-verified with 400 on bad payload. Plausible env var intentionally not set — analytics honest-disabled state is the Sprint D final decision (future sprint can activate with 1-line env var). 2 test rows remain in `erken_erisim` table (cleanup optional — see api-responses/prod-early-access-post-migration.txt).
 
 ---
 
@@ -43,9 +43,10 @@ Live URL: https://arac-karar-motoru.vercel.app
 | `/api/health.publicBetaMode` | `src/lib/flags.ts`, `src/app/api/health/route.ts` | `true` ✓ (curl verified) | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | `PUBLIC_BETA_MODE` unset → fail-safe TRUE | ✅ LIVE NEW |
 | `/api/health.dataFreshness` | Sprint D P9 | `{staleCount:1, oldestStaleKey:"yakit", oldestStaleDays:83}` ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | N/A | ✅ LIVE NEW |
 | `/api/data-status.dataFreshness.staleSummary` | Sprint D P9 | contains full yakit entry ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | N/A | ✅ LIVE NEW |
-| `/api/early-access` POST | `src/app/api/early-access/route.ts` | Handler deployed ✓; returns 500 `db_error` PGRST205 until migration 003 applied | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | `SUPABASE_SERVICE_ROLE_KEY` (Sprint B) | ⏳ CODE LIVE, migration manual pending |
-| `/api/early-access` POST validation | `src/app/api/early-access/validation.ts` | 400 `ad_too_short` on invalid payload ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | N/A | ✅ LIVE NEW |
-| `/api/admin/early-access` GET | `src/app/api/admin/early-access/route.ts` | Admin-guarded list, awaits migration | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | Sprint B auth | ⏳ CODE LIVE, migration manual pending |
+| `/api/early-access` POST | `src/app/api/early-access/route.ts` | ✅ VERIFIED POST-MIGRATION: `{"ok":true,"id":1}` + `{"ok":true,"id":2}` on two valid payloads (genel + karsilastirma enum values) | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | `SUPABASE_SERVICE_ROLE_KEY` (Sprint B) | ✅ LIVE NEW |
+| `/api/early-access` POST validation | `src/app/api/early-access/validation.ts` | 400 `ad_too_short` on invalid pre-migration; 400 `missing_ad` on empty-ad post-migration ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | N/A | ✅ LIVE NEW |
+| `/api/admin/early-access` GET | `src/app/api/admin/early-access/route.ts` | Admin-guarded list (UI available post-login at /admin → Erken Erişim tab) | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | Sprint B auth | ✅ LIVE NEW |
+| `supabase.erken_erisim` table | `supabase/migrations/003_early_access.sql` | Applied via Dashboard SQL Editor 2026-04-08; confirmed by user screenshot + 2 successful row inserts | n/a (Supabase migration, not Vercel deploy) | RLS: public anon INSERT only | ✅ APPLIED |
 | Header BETA pill | `Header.tsx` + `usePublicBeta` | Present in `/` + `/odeme` HTML ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | N/A | ✅ LIVE NEW |
 | Footer disclosure block | `Footer.tsx` + `usePublicBeta` | Present in `/` + `/odeme` HTML ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | N/A | ✅ LIVE NEW |
 | `/odeme` waitlist variant | `src/app/odeme/page.tsx` WaitlistVariant | Production JS chunk contains `Erken Erişim Listesi` + `waitlist_signup` + `early-access` + `odeme_mode` ✓ | `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` | — | ✅ LIVE NEW |
@@ -71,7 +72,7 @@ See `delivery/sprint-d/sprint-end-questions.md` for full answers. Summary:
 2. **Payment mode**: `paymentSandbox` (Sprint C state preserved; public users now see waitlist instead of sandbox 3-step)
 3. **publicBetaMode active**: YES — `/api/health.publicBetaMode === true` (fail-safe default TRUE, `PUBLIC_BETA_MODE` env var intentionally unset)
 4. **Analytics active**: NO — `/api/health.flags.analyticsEnabled === {enabled:false, reason:'missing_env'}` (honest state per Sprint D user decision to defer Plausible)
-5. **Early access working**: CODE LIVE, DB schema PENDING migration 003 manual apply via Supabase Dashboard SQL Editor (Supabase MCP offline at deploy time)
+5. **Early access working**: ✅ YES, FULLY LIVE. Migration 003 applied 2026-04-08 via Supabase Dashboard SQL Editor (user). Post-migration verification: 2 successful POST insertions (ids 1 and 2), validation 400 on bad payload still correct. 2 test rows remain in table (cleanup optional).
 6. **Approximate data**: yakit (stale 83 days per `/api/data-status.dataFreshness.staleSummary[0]`), district offset (intentional formula), highway segments (confidence='kesin' for bridges, 'tahmini' for segments per manifest)
 7. **Source-of-truth consistency**: YES — ADR-001 still binding, no Sprint D writes to `src/data/`, new `docs/methodology-parity.md` tabulates 7/10 matches + 2/10 formulas + 1/10 documented drift
 8. **Live launch gating items**: (a) merchant agreement + KVKK vendor review, (b) live iyzico env vars `IYZICO_API_KEY/IYZICO_SECRET_KEY/IYZICO_BASE_URL=https://api.iyzipay.com`, (c) `PUBLIC_BETA_MODE=false`, (d) refresh yakit data, (e) apply migration 003 (Sprint D admin feature pending)

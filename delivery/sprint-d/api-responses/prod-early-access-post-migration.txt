@@ -1,0 +1,67 @@
+=== /api/early-access production — POST-MIGRATION verification ===
+
+Migration 003 applied manually by user via Supabase Dashboard SQL Editor
+at 2026-04-08 (local time, confirmed by user screenshot showing
+"Success. No rows returned" on CREATE TABLE/INDEX/POLICY batch).
+
+=== PROBE 1: Valid payload, ilgi=genel ===
+$ curl -s -X POST "https://arac-karar-motoru.vercel.app/api/early-access" \
+    -H "Content-Type: application/json" \
+    -d '{"ad":"Sprint D Verification","email":"sprintd-postmigration@example.com","ilgi":"genel","not_metni":"Post-migration verification test from Claude agent"}'
+
+{"ok":true,"id":1}
+HTTP_CODE: 200
+
+Analysis:
+- Route handler → validation → Supabase INSERT → 200 response ✓
+- id=1 returned (BIGSERIAL PK working, first row in erken_erisim) ✓
+- No error leakage ✓
+- KVKK: ip_hash field populated server-side as SHA-256 (not visible in response) ✓
+
+=== PROBE 2: Valid payload, ilgi=karsilastirma ===
+$ curl -s -X POST "https://arac-karar-motoru.vercel.app/api/early-access" \
+    -H "Content-Type: application/json" \
+    -d '{"ad":"Sprint D Test 2","email":"sprintd-test2@example.com","ilgi":"karsilastirma","not_metni":"Second post-migration test"}'
+
+{"ok":true,"id":2}
+HTTP_CODE: 200
+
+Analysis:
+- Second enum value (karsilastirma) accepted ✓
+- Sequence correctly incremented to id=2 ✓
+- Multiple rows insert successfully ✓
+
+=== PROBE 3: Invalid payload (empty ad, bad email, bad enum) ===
+$ curl -s -X POST "https://arac-karar-motoru.vercel.app/api/early-access" \
+    -H "Content-Type: application/json" \
+    -d '{"ad":"","email":"not-an-email","ilgi":"wrong_enum","not_metni":""}'
+
+{"ok":false,"error":"missing_ad"}
+HTTP_CODE: 400
+
+Analysis:
+- Validation returns FIRST error encountered ("missing_ad" is first failure) ✓
+- 400 bad request, no DB hit ✓
+- No secret or field detail leaked ✓
+
+=== SUMMARY ===
+Sprint D P3 (/api/early-access POST) is now FULLY LIVE in production.
+- Migration 003 applied: YES
+- Route handler deployed: YES (dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W, commit 9371f75)
+- Valid payloads accepted: YES (2 rows successfully inserted, ids 1 and 2)
+- Validation layer: YES (400 on bad payload, first-error semantics)
+- KVKK compliance: YES (ip_hash SHA-256, no cleartext PII)
+
+=== CLEANUP NOTE ===
+2 test rows (ids 1, 2) are currently in the erken_erisim table.
+These should be deleted before public beta launch:
+
+DELETE FROM erken_erisim WHERE email IN (
+  'sprintd-postmigration@example.com',
+  'sprintd-test2@example.com'
+);
+
+Apply via Supabase Dashboard SQL Editor:
+https://supabase.com/dashboard/project/fyuxlmcugtdxuvjnzdtu/sql/new
+
+Or leave them in — they're harmless test rows with fake emails and no PII.

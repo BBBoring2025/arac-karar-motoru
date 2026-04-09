@@ -4,7 +4,7 @@
 |---|---|---|---|
 | P0 | Baseline Capture | ✅ DONE | `baseline/*.{json,txt}`, `sprint-d-baseline.md`, 3391 assertion pre-sprint baseline captured |
 | P1 | publicBetaMode flag + public-beta-policy.md | ✅ DONE | `src/lib/flags.ts` (publicBetaMode added), `docs/public-beta-policy.md`, `src/lib/__tests__/flags.test.ts` (19 assertions pass), `/api/health.publicBetaMode` top-level field |
-| P2 | Supabase migration 003_early_access | ⚠️ FILE READY / APPLY PENDING | `supabase/migrations/003_early_access.sql` written. Apply via Dashboard at P14 (Supabase MCP offline) |
+| P2 | Supabase migration 003_early_access | ✅ APPLIED | `supabase/migrations/003_early_access.sql` written + applied 2026-04-08 via Supabase Dashboard SQL Editor (user manual action, confirmed by screenshot and 2 successful POST insertions post-P15) |
 | P3 | /api/early-access route + validation | ✅ DONE | `src/app/api/early-access/route.ts`, `validation.ts` pure function, `validation.test.ts` 32 assertions pass |
 | P4 | EarlyAccessForm component | ✅ DONE | `src/components/payment/EarlyAccessForm.tsx` (~220 lines), reuses Input/Button/Select/Card, analytics waitlist_signup event |
 | P5 | /odeme waitlist default + ?mode=sandbox | ✅ DONE | `src/app/odeme/page.tsx` WaitlistVariant added, isAdminTestMode state + sessionStorage, Sprint C 3-step preserved in admin path |
@@ -16,7 +16,8 @@
 | P11 | 4 calc page hardcoded Bilgilendirme Card cleanup | ✅ DONE | mtv/muayene/otoyol/yakit all have their hardcoded "Bilgilendirme" Card removed. `<DataSourceFooter>` is single source. Sprint C P11 "Sizin fiyatınız" fuel override UX preserved |
 | P12 | Methodology parity doc | ✅ DONE | `docs/methodology-parity.md` (audit: 7/10 direct match, 2/10 intentional formulas, 1/10 content drift, 1 gap — Sprint E candidates) |
 | P13 | Manual QA + delivery package | ✅ DONE | This file + sibling delivery docs, ~21 files total |
-| P14 | Vercel CLI deploy + 4-proof + ZIPs | ✅ DONE (migration 003 user-pending) | Commit `9371f75` pushed; `npx vercel deploy --prod --yes` → `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` READY; prod parity MATCH; /api/health + /api/data-status + /api/build-info all verified; /odeme + calc chunks contain Sprint D markers; 2 Desktop ZIPs created (arac-karar-motoru-sprint-d-9371f75.zip 682KB, delivery-sprint-d-9371f75.zip 74KB) + secret leak clean; migration 003 user-manual pending via Supabase Dashboard SQL Editor; Plausible env var intentionally deferred (honest-disabled per user decision) |
+| P14 | Vercel CLI deploy + 4-proof + ZIPs | ✅ DONE | Commit `9371f75` pushed; `npx vercel deploy --prod --yes` → `dpl_Hty7iW3mntNRtrpWWZWiaWLCWu9W` READY; prod parity MATCH; /api/health + /api/data-status + /api/build-info all verified; /odeme + calc chunks contain Sprint D markers; Desktop ZIPs created + secret leak clean; Plausible env var intentionally deferred (honest-disabled per user decision) |
+| P15 | Post-migration verification | ✅ DONE | User applied migration 003 via Supabase Dashboard SQL Editor (screenshot confirmed "Success. No rows returned"). Verification: 2 valid POSTs → `{"ok":true,"id":1}` + `{"ok":true,"id":2}` (genel + karsilastirma enum values); 1 invalid POST → `{"ok":false,"error":"missing_ad"}` 400. `/api/early-access` + `/api/admin/early-access` + `erken_erisim` table all FULLY LIVE. 2 test rows remain (cleanup optional). |
 
 ---
 
